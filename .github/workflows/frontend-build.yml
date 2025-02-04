@@ -1,0 +1,43 @@
+name: Frontend Build & Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛎️ Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📦 Install Dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: 🎨 Run Linter
+        run: |
+          cd frontend
+          npm run lint
+
+      - name: ✅ Run Tests
+        run: |
+          cd frontend
+          npm test
+
+      - name: 📦 Build Project
+        run: |
+          cd frontend
+          npm run build

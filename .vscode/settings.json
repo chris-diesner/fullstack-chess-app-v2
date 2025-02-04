@@ -1,0 +1,11 @@
+{
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+    "python.analysis.typeCheckingMode": "basic",
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "eslint.validate": ["javascript", "typescript", "typescriptreact"],
+    "prettier.singleQuote": true,
+    "prettier.trailingComma": "all"
+}
