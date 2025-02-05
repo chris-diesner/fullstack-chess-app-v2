@@ -21,6 +21,9 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: 🛠️ Set PYTHONPATH
+        run: echo "PYTHONPATH=$GITHUB_WORKSPACE/backend" >> $GITHUB_ENV
+
       - name: 📦 Install Dependencies
         working-directory: backend
         run: |
@@ -28,8 +31,11 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt
 
+      - name: 📂 Ensure tests is a package
+        run: touch backend/tests/__init__.py
+
       - name: ✅ Run Tests
         working-directory: backend
         run: |
           source venv/bin/activate
-          pytest --junitxml=report.xml
+          python -m pytest --junitxml=report.xml
