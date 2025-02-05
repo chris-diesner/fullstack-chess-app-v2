@@ -7,5 +7,10 @@
     "typescript.tsdk": "node_modules/typescript/lib",
     "eslint.validate": ["javascript", "typescript", "typescriptreact"],
     "prettier.singleQuote": true,
-    "prettier.trailingComma": "all"
+    "prettier.trailingComma": "all",
+    "python.testing.pytestArgs": [
+        "backend"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }
