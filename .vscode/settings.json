@@ -8,9 +8,16 @@
     "eslint.validate": ["javascript", "typescript", "typescriptreact"],
     "prettier.singleQuote": true,
     "prettier.trailingComma": "all",
-    "python.testing.pytestArgs": [
-        "backend"
-    ],
+
+    // Pytest Konfiguration
+    "python.testing.pytestArgs": ["backend/tests"],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+
+    // PYTHONPATH setzen, damit VS Code `backend/` als Root erkennt
+    "python.analysis.extraPaths": ["backend"],
+    "python.envFile": "${workspaceFolder}/backend/.env",
+    "terminal.integrated.env.windows": {
+        "PYTHONPATH": "${workspaceFolder}/backend"
+    }
 }

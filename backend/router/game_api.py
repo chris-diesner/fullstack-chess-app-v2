@@ -1,8 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
-from router import game_api
+from chess_board import ChessBoard
 
 app = FastAPI()
+board = ChessBoard()
+
+game_router = APIRouter()
 
 # CORS-Unterstützung für das Frontend
 app.add_middleware(
@@ -13,9 +16,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# API-Router registrieren
-app.include_router(game_api.game_router, prefix="/game", tags=["Game"])
-# app.include_router(status.router, prefix="/status", tags=["Status"])
+# API-Router für das Spiel
+@game_router.get("/board")
+def get_board_state():
+    return {"board": board.get_board_state()}
+
+app.include_router(game_router, prefix="/game", tags=["Game"])
 
 @app.get("/")
 def home():
