@@ -1,3 +1,4 @@
+from fastapi import FastAPI
 from typing import Any
 from figures.figure import Figure, Bishop, Rook, Queen, Pawn, King, Knight
 
