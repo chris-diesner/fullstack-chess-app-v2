@@ -7,8 +7,7 @@ board = ChessBoard()
 
 class ChessGame:
     def __init__(self, white_name="User 1", black_name="User 2"):
-        self.board = ChessBoard()
-        self.board.setup_board()
+        self.board = board if board else ChessBoard()
         self.current_player = "white"
         self.last_move = None
         self.white_player = User(white_name, "white")
@@ -45,7 +44,7 @@ class ChessGame:
     def is_king_in_check(self, current_player):
         king_pos = self.get_king_position(current_player)
         if not king_pos:
-            return False, None
+            return False, []
 
         attacking_figures = []
 
@@ -60,15 +59,11 @@ class ChessGame:
 
     def is_king_in_checkmate(self, current_player):
         king_in_check, attacking_figures = self.is_king_in_check(current_player)
-        print(f"🔍 [DEBUG] König in Schach? {king_in_check}, Angreifer: {attacking_figures}")
-
         if not king_in_check:
-            print("✅ [DEBUG] Der König ist nicht im Schach, daher kein Schachmatt.")
             return False
 
         king_pos = self.get_king_position(current_player)
         if not king_pos:
-            print("✅ [DEBUG] Kein König gefunden. Das sollte nicht passieren!")
             return False
 
         king = self.board.squares[king_pos[0]][king_pos[1]]
@@ -76,19 +71,16 @@ class ChessGame:
 
         for end_row in range(8):
             for end_col in range(8):
-                if king.is_move_valid(king_pos, (end_row, end_col), self.board.squares):
+                if king and king.is_move_valid(king_pos, (end_row, end_col), self.board.squares):
                     if not self.simulate_move_and_check(current_player, king_pos, (end_row, end_col)):
                         legal_moves.append((end_row, end_col))
 
-        print(f"🔍 [DEBUG] König hat folgende legale Züge: {legal_moves}")
         if legal_moves:
-            print("✅ [DEBUG] König kann entkommen, daher kein Schachmatt.")
             return False
 
         if len(attacking_figures) == 1:
             attacker_pos = attacking_figures[0][1]
             blocking_positions = self.get_positions_between(king_pos, attacker_pos)
-            print(f"🔍 [DEBUG] Mögliche Blockierungsfelder: {blocking_positions}")
 
             for row in range(8):
                 for col in range(8):
@@ -97,10 +89,8 @@ class ChessGame:
                         for block_pos in blocking_positions:
                             if figure.is_move_valid((row, col), block_pos, self.board.squares):
                                 if not self.simulate_move_and_check(current_player, (row, col), block_pos):
-                                    print(f"✅ [DEBUG] {figure} kann den Angriff blockieren, kein Schachmatt.")
                                     return False
 
-        print("🚨 [DEBUG] Der König ist schachmatt!")
         return True
 
 

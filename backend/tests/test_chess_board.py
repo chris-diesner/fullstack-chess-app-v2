@@ -19,9 +19,11 @@ class TestChessBoard(unittest.TestCase):
             white_pawn = self.board.squares[6][i]
             black_pawn = self.board.squares[1][i]
             self.assertIsInstance(white_pawn, Pawn)
-            self.assertEqual(white_pawn.color, "white")
+            if white_pawn is not None:
+                self.assertEqual(white_pawn.color, "white")
             self.assertIsInstance(black_pawn, Pawn)
-            self.assertEqual(black_pawn.color, "black")
+            if black_pawn is not None:
+                self.assertEqual(black_pawn.color, "black")
 
     def test_major_pieces_position(self):
         figures = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
@@ -29,9 +31,11 @@ class TestChessBoard(unittest.TestCase):
             white_piece = self.board.squares[7][i]
             black_piece = self.board.squares[0][i]
             self.assertIsInstance(white_piece, figure_class)
-            self.assertEqual(white_piece.color, "white")
+            if white_piece is not None:
+                self.assertEqual(white_piece.color, "white")
             self.assertIsInstance(black_piece, figure_class)
-            self.assertEqual(black_piece.color, "black")
+            if black_piece is not None:
+                self.assertEqual(black_piece.color, "black")
             
     def test_figure_uuids(self):
         for row in self.board.squares:

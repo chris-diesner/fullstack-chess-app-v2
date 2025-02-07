@@ -1,10 +1,10 @@
 import unittest
-from typing import Any
+from typing import List, Optional
 from figures.figure import Figure, Bishop, Rook, Queen, Pawn, King, Knight
 
 class TestKing(unittest.TestCase):
     def setUp(self):
-        self.board = [[None for _ in range(8)] for _ in range(8)]  
+        self.board: List[List[Optional[Figure]]] = [[None for _ in range(8)] for _ in range(8)]  
         self.white_king = King("white", (0, 4))
         self.black_king = King("black", (7, 4))
 
@@ -26,7 +26,7 @@ class TestKing(unittest.TestCase):
 
 class TestRook(unittest.TestCase):
     def setUp(self):
-        self.board = [[None for _ in range(8)] for _ in range(8)]
+        self.board: List[List[Optional[Figure]]] = [[None for _ in range(8)] for _ in range(8)]
         self.white_rook = Rook("white", (0, 0))
         self.black_rook = Rook("black", (7, 7))
 
@@ -53,7 +53,7 @@ class TestRook(unittest.TestCase):
 
 class TestQueen(unittest.TestCase):
     def setUp(self):
-        self.board = [[None for _ in range(8)] for _ in range(8)]
+        self.board: List[List[Optional[Figure]]] = [[None for _ in range(8)] for _ in range(8)]
         self.white_queen = Queen("white", (0, 3))
         self.black_queen = Queen("black", (7, 3))
 
@@ -90,9 +90,9 @@ class TestQueen(unittest.TestCase):
 
 class TestPawn(unittest.TestCase):
     def setUp(self):
+        self.board: List[List[Optional[Figure]]] = [[None for _ in range(8)] for _ in range(8)]
         self.white_pawn = Pawn("white", (6, 1))
         self.black_pawn = Pawn("black", (1, 1))
-        self.board = [[None for _ in range(8)] for _ in range(8)]
 
     def test_single_forward_move_should_return_true(self):
         result = self.white_pawn.is_move_valid((6, 1), (5, 1), self.board)
@@ -149,7 +149,7 @@ class TestPawn(unittest.TestCase):
         
 class TestBishop(unittest.TestCase):
     def setUp(self):
-        self.board = [[None for _ in range(8)] for _ in range(8)]
+        self.board: List[List[Optional[Figure]]] = [[None for _ in range(8)] for _ in range(8)]
         self.white_bishop = Bishop("white", (0, 2))
         self.black_bishop = Bishop("black", (7, 5))
         
@@ -179,7 +179,7 @@ class TestBishop(unittest.TestCase):
         
 class TestKnight(unittest.TestCase):
     def setUp(self):
-        self.board = [[None for _ in range(8)] for _ in range(8)]
+        self.board: List[List[Optional[Figure]]] = [[None for _ in range(8)] for _ in range(8)]
         self.white_knight = Knight("white", (0, 1))
         self.black_knight = Knight("black", (7, 1))
 

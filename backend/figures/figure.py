@@ -1,6 +1,7 @@
 import uuid
+from abc import ABC, abstractmethod
 
-class Figure:
+class Figure(ABC):
     def __init__(self, color, position, name):
         self.color = color
         self.position = position
@@ -8,25 +9,13 @@ class Figure:
         self.id = str(uuid.uuid4())
         self.move_history = []
         
+    @abstractmethod
+    def is_move_valid(self, start_pos, end_pos, board, last_move=None):
+        pass
+        
     def within_board(self, pos):
         row, col = pos
         return 0 <= row < 8 and 0 <= col < 8
-
-    def is_path_clear(self, start_pos, end_pos, board):
-        """ Check if there are no obstructions in a straight or diagonal path. """
-        start_row, start_col = start_pos
-        end_row, end_col = end_pos
-        
-        step_row = (end_row - start_row) // max(1, abs(end_row - start_row))
-        step_col = (end_col - start_col) // max(1, abs(end_col - start_col))
-        
-        row, col = start_row + step_row, start_col + step_col
-        while (row, col) != (end_row, end_col):
-            if board[row][col] is not None:
-                return False
-            row += step_row
-            col += step_col
-        return True
 
 class Bishop(Figure):
     
