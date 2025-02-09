@@ -7,11 +7,22 @@ board = ChessBoard()
 
 class ChessGame:
     def __init__(self, white_name="User 1", black_name="User 2"):
-        self.board = board if board else ChessBoard()
+        self.game_id = str(uuid.uuid4())
+        self.board = ChessBoard()
         self.current_player = "white"
         self.last_move = None
         self.white_player = User(white_name, "white")
         self.black_player = User(black_name, "black")
+        
+    def reset_board(self):
+        self.__init__()
+        
+    def get_game_state(self):
+        return {
+            "game_id": self.game_id,
+            "board": self.board.get_board_state(),
+            "current_player": self.current_player
+        }
 
     def get_current_player(self):
         return self.white_player if self.current_player == "white" else self.black_player
