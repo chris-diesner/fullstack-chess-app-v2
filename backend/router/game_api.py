@@ -2,6 +2,8 @@ from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from chess_board import ChessBoard
 from chess_game import ChessGame
+from chess_exception import ChessException
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 app.state.game = ChessGame()
@@ -22,6 +24,13 @@ app.add_middleware(
 )
 
 app.include_router(game_router, prefix="/game", tags=["Game"])
+
+@app.exception_handler(ChessException)
+async def chess_exception_handler(request, exc: ChessException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.message},
+    )
 
 @game_router.post("/new")
 def create_game():
@@ -45,8 +54,11 @@ def move_figure(game_id: str, start_pos: str, end_pos: str):
 
     start_row, start_col = game.board.notation_to_index(start_pos)
     end_row, end_col = game.board.notation_to_index(end_pos)
-    game.move_figure((start_row, start_col), (end_row, end_col))
-    return game.get_game_state()
+    try:
+        move_result = game.move_figure((start_row, start_col), (end_row, end_col))
+        return {"message": move_result, "game_state": game.get_game_state()}
+    except ChessException as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
 
 @app.get("/")
 def home():

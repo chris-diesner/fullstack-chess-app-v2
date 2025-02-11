@@ -1,4 +1,5 @@
 from chess_board import ChessBoard
+from chess_exception import ChessException
 from figures.figure import Figure, Bishop, Rook, Queen, Pawn, King, Knight
 from user import User
 import uuid
@@ -30,7 +31,7 @@ class ChessGame:
     def switch_player(self):
         self.current_player = "black" if self.current_player == "white" else "white"
         if self.check_stalemate():
-            print("Patt!")
+            raise(ChessException("Unentschieden! Patt!", 200))
 
     def check_stalemate(self):
         stalemate = self.is_stalemate(self.current_player)
@@ -104,7 +105,6 @@ class ChessGame:
 
         return True
 
-
     def simulate_move_and_check(self, current_player, start_pos, end_pos):
         temp_field = self.board.squares[end_pos[0]][end_pos[1]]
         figure = self.board.squares[start_pos[0]][start_pos[1]]
@@ -121,8 +121,6 @@ class ChessGame:
 
         return in_check
 
-
-    
     def get_positions_between(self, start_pos, end_pos):
         positions = []
         start_row, start_col = start_pos
@@ -229,34 +227,33 @@ class ChessGame:
         self.get_current_player().record_move(move_notation)
         return True
 
-
     def move_figure(self, start_pos, end_pos, figure_id=None):
         if start_pos == end_pos:
-            return "Ungültiger Zug: nicht auf das gleiche Feld ziehen!"
+            raise ChessException("Ungültiger Zug: Nicht auf das gleiche Feld ziehen!", 400)
         figure = self.board.squares[start_pos[0]][start_pos[1]]
         target_field = self.board.squares[end_pos[0]][end_pos[1]]
 
         if figure is None:
-            return "Du hast ein leeres Feld ausgewählt!"
+            raise ChessException("Ungültiger Zug: Bitte kein leeres Feld auswählen!", 400)
         
         if figure_id and figure.id != figure_id:
-            return "Fehler: Figuren-ID stimmt nicht überein!"
+            raise ChessException("interner Fehler: Figuren-ID stimmt nicht überein!", 400)
         
         if figure.color != self.current_player:
-            return f"Es ist {self.current_player}'s Zug!"
+            raise ChessException(f"Es ist {self.current_player}'s Zug!", 403)
         
         if isinstance(figure, King) and abs(start_pos[1] - end_pos[1]) == 2:
             if self.handle_rochade(figure, start_pos, end_pos):
                 self.switch_player()
                 return f"Rochade erfolgreich von {start_pos} nach {end_pos}"
             else:
-                return "Ungültiger Zug: Rochade nicht erlaubt"
+                raise ChessException(f"Ungültiger Zug: Rochade nicht erlaubt")
         
         if not figure.is_move_valid(start_pos, end_pos, self.board.squares, self.last_move):
-            return "Ungültiger Zug!"
+            raise ChessException("Ungültiger Zug: Bewegung nicht erlaubt!", 400)
         
         if self.simulate_move_and_check(self.current_player, start_pos, end_pos):
-            return "ungültiger Zug! king im Schach!"
+            raise ChessException("Ungültiger Zug: Dein König steht im Schach!", 400)
 
         if target_field and target_field.color == figure.color:
             return "Ungültiger Zug! Zielfeld ist durch eine eigene Figur blockiert."
@@ -356,7 +353,6 @@ class ChessGame:
         print(f"🔍 [DEBUG] Generierte Notation: {notation}")  # Neue Debugging-Ausgabe
         return notation
 
-
     def execute_move(self, figure, start_pos, end_pos, move_notation):
         if move_notation is None:
             print(f"🚨 [DEBUG] FEHLER: move_notation ist None für {figure} von {start_pos} nach {end_pos}")
@@ -369,7 +365,6 @@ class ChessGame:
         
         print(f"✅ [DEBUG] {move_notation}")
         print(f"✅ [DEBUG] {self.print_move_history()}")
-
         
     def print_move_history(self):
         print("Zug-Historie:")

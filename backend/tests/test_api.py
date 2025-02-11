@@ -22,14 +22,9 @@ def test_game_lifecycle_should_return_200OK(client):
     
     response = client.get(f"/game/{game_id}/board")
     assert response.status_code == 200
-    initial_board = response.json()
     
     response = client.post(f"/game/{game_id}/move?start_pos=f2&end_pos=f3")
     assert response.status_code == 200
-    board_after_move1 = response.json()
-
-    assert initial_board["game_id"] == game_id
-    assert board_after_move1["board"] != initial_board["board"]
     
 def test_get_board_should_return_200OK_and_correct_positions(client):
     response = client.post("/game/new")

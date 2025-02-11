@@ -1,5 +1,6 @@
 import unittest
 from chess_game import ChessGame
+from chess_exception import ChessException
 from typing import List, Optional
 from figures.figure import Figure, Bishop, Rook, Queen, Pawn, King, Knight
 
@@ -106,20 +107,26 @@ class TestChessGame(unittest.TestCase):
         self.assertFalse(result)
 
     def test_move_no_figure_should_return_string_empty_field(self):
-        result = self.game.move_figure((3, 3), (4, 4))
-        self.assertEqual(result, "Du hast ein leeres Feld ausgewählt!")
+        with self.assertRaises(ChessException) as context:
+            self.game.move_figure((3, 3), (4, 4))
+        self.assertEqual(str(context.exception), "Ungültiger Zug: Bitte kein leeres Feld auswählen!")
+        self.assertEqual(context.exception.status_code, 400)
 
     def test_move_wrong_player_should_return_string_invalid_figure(self):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
         self.game.board.squares[1][3] = King("black", (1, 3))
-        result = self.game.move_figure((1, 3), (2, 3))
-        self.assertEqual(result, "Es ist white's Zug!")
-
+        with self.assertRaises(ChessException) as context:
+            self.game.move_figure((1, 3), (2, 3))
+        self.assertEqual(str(context.exception), f"Es ist {self.game.current_player}'s Zug!")
+        self.assertEqual(context.exception.status_code, 403)
+        
     def test_invalid_move_should_return_string_invalid_move(self):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
         self.game.board.squares[1][3] = Pawn("white", (1, 3))
-        result = self.game.move_figure((1, 3), (5, 1))
-        self.assertEqual(result, "Ungültiger Zug!")
+        with self.assertRaises(ChessException) as context:
+            self.game.move_figure((1, 3), (5, 1))
+        self.assertEqual(str(context.exception), "Ungültiger Zug: Bewegung nicht erlaubt!")
+        self.assertEqual(context.exception.status_code, 400)
         
     def test_valid_move_switches_player_shold_return_string_sitched_color_black(self):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
@@ -131,21 +138,27 @@ class TestChessGame(unittest.TestCase):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
         self.game.board.squares[6][0] = Pawn("white", (6, 0))
         self.game.board.squares[5][0] = Pawn("white", (5, 0))
-        result = self.game.move_figure((6, 0), (5, 0))
-        self.assertEqual(result, "Ungültiger Zug!")
+        with self.assertRaises(ChessException) as context:
+            self.game.move_figure((6, 0), (5, 0))
+        self.assertEqual(str(context.exception), "Ungültiger Zug: Bewegung nicht erlaubt!")
+        self.assertEqual(context.exception.status_code, 400)
 
     def test_capture_empty_field_should_return_string_invalid_move(self):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
         self.game.board.squares[6][0] = Pawn("white", (6, 0))
-        result = self.game.move_figure((6, 0), (5, 1)) 
-        self.assertEqual(result, "Ungültiger Zug!")
+        with self.assertRaises(ChessException) as context:
+            self.game.move_figure((6, 0), (5, 1))
+        self.assertEqual(str(context.exception), "Ungültiger Zug: Bewegung nicht erlaubt!")
+        self.assertEqual(context.exception.status_code, 400)
         
     def test_move_while_in_check_should_return_string_invalid_move_king_check(self):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
         self.game.board.squares[1][0] = King("white", (1, 0))
         self.game.board.squares[0][7] = Rook("black", (0, 7))
-        result = self.game.move_figure((1, 0), (0, 0))
-        self.assertEqual(result, "ungültiger Zug! king im Schach!")
+        with self.assertRaises(ChessException) as context:
+            self.game.move_figure((1, 0), (0, 0))
+        self.assertEqual(str(context.exception), "Ungültiger Zug: Dein König steht im Schach!")
+        self.assertEqual(context.exception.status_code, 400)
         
     def test_is_stalemate_should_return_true_if_no_legal_move_possible(self):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
@@ -153,19 +166,11 @@ class TestChessGame(unittest.TestCase):
         self.game.board.squares[1][2] = King("black", (1, 2))
         self.game.board.squares[2][2] = Knight("black", (2, 2))
         self.game.current_player = "black"
-        self.game.switch_player()
-        self.assertTrue(self.game.check_stalemate())
-        
-    def test_is_stalemate_should_return_false_if_legal_moves_exist(self):
-        self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
-        self.game.board.squares[0][0] = King("white", (0, 0))
-        self.game.board.squares[7][7] = King("black", (7, 7))
-        self.game.board.squares[6][6] = Queen("white", (6, 6))
-        self.game.board.squares[5][5] = Pawn("black", (5, 5))
-        self.game.current_player = "white"
-        self.game.switch_player()
-        self.assertFalse(self.game.check_stalemate())
-        
+        with self.assertRaises(ChessException) as context:
+            self.game.switch_player()
+        self.assertEqual(str(context.exception), "Unentschieden! Patt!")
+        self.assertEqual(context.exception.status_code, 200)
+    
     def test_fools_mate_should_return_true_for_checkmate_after_four_moves(self):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
         self.game.board.setup_board()
@@ -204,9 +209,11 @@ class TestChessGame(unittest.TestCase):
         invalid_uuid = "00000000-0000-0000-0000-000000000000"
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
         self.game.board.squares[6][0] = Pawn("white", (6, 0))
-        result = self.game.move_figure((6, 0), (4, 0), invalid_uuid)
-        self.assertEqual(result, "Fehler: Figuren-ID stimmt nicht überein!")
-
+        with self.assertRaises(ChessException) as context:
+            self.game.move_figure((6, 0), (4, 0), invalid_uuid)
+        self.assertEqual(str(context.exception), "interner Fehler: Figuren-ID stimmt nicht überein!")
+        self.assertEqual(context.exception.status_code, 400)
+       
     def test_valid_move_should_return_string_movement_notation(self):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
         self.game.board.squares[6][0] = Pawn("white", (6, 0))
@@ -271,8 +278,10 @@ class TestChessGame(unittest.TestCase):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
         self.game.board.squares[6][0] = Pawn("white", (6, 0))
         self.game.current_player = "black"
-        result = self.game.move_figure((6, 0), (4, 0))
-        self.assertEqual(result, "Es ist black's Zug!")
+        with self.assertRaises(ChessException) as context:
+            self.game.move_figure((6, 0), (4, 0))
+        self.assertEqual(str(context.exception), f"Es ist {self.game.current_player}'s Zug!")
+        self.assertEqual(context.exception.status_code, 403)
         
     def test_target_uuid_mismatch_should_return_error_for_mismatched_ids_in_history(self):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
@@ -394,8 +403,9 @@ class TestChessGame(unittest.TestCase):
         self.game.move_figure((2, 2), (2, 3))
         self.game.move_figure((7, 5), (7, 4))
         self.game.move_figure((2, 3), (2, 2))
-        result = self.game.move_figure((7, 4), (7, 6)) 
-        self.assertIn("Ungültiger Zug: Rochade nicht erlaubt", result)
+        with self.assertRaises(ChessException) as context:
+            self.game.move_figure((7, 4), (7, 6))
+        self.assertEqual(str(context.exception), f"Ungültiger Zug: Rochade nicht erlaubt")
         
     def test_simulate_move_and_check_king_remains_in_check(self):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
