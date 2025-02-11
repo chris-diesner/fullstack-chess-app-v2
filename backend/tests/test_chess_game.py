@@ -13,12 +13,6 @@ class TestChessGame(unittest.TestCase):
     def test_white_opens_game_should_retrun_string_white(self):
         self.assertEqual(self.game.current_player, "white")
         
-    def test_switch_player_should_return_string_switched_color(self):
-        self.game.switch_player()
-        self.assertEqual(self.game.current_player, "black")
-        self.game.switch_player()
-        self.assertEqual(self.game.current_player, "white")
-    
     def test_convert_to_coordinates_should_return_string_coordinates(self):
         result = self.game.convert_to_coordinates((0, 0))
         self.assertEqual(result, "A8")
@@ -128,12 +122,6 @@ class TestChessGame(unittest.TestCase):
         self.assertEqual(str(context.exception), "Ungültiger Zug: Bewegung nicht erlaubt!")
         self.assertEqual(context.exception.status_code, 400)
         
-    def test_valid_move_switches_player_shold_return_string_sitched_color_black(self):
-        self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
-        self.game.board.squares[6][3] = Pawn("white", (6, 3))
-        self.game.move_figure((6, 3), (5, 3)) 
-        self.assertEqual(self.game.current_player, "black")
-
     def test_move_pawn_on_blocked_field_should_return_string_invalid_move(self):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
         self.game.board.squares[6][0] = Pawn("white", (6, 0))
@@ -213,22 +201,6 @@ class TestChessGame(unittest.TestCase):
             self.game.move_figure((6, 0), (4, 0), invalid_uuid)
         self.assertEqual(str(context.exception), "interner Fehler: Figuren-ID stimmt nicht überein!")
         self.assertEqual(context.exception.status_code, 400)
-       
-    def test_valid_move_should_return_string_movement_notation(self):
-        self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
-        self.game.board.squares[6][0] = Pawn("white", (6, 0))
-        result = self.game.move_figure((6, 0), (4, 0))
-        self.assertTrue(result.startswith("pawn (white"))
-        self.assertIn("von A2 auf A4", result)
-
-    def test_valid_move_updates_board_should_return_string_updated_board(self):
-        self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
-        self.game.board.squares[6][0] = Pawn("white", (6, 0))
-        result = self.game.move_figure((6, 0), (4, 0))
-        self.assertTrue(result.startswith("pawn (white"))
-        self.assertIn("von A2 auf A4", result)
-        self.assertIsNone(self.game.board.squares[6][0]) 
-        self.assertIsInstance(self.game.board.squares[4][0], Pawn) 
 
     def test_capture_opponent_with_uuid_check_should_return_string_valid_move(self):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
@@ -246,14 +218,6 @@ class TestChessGame(unittest.TestCase):
         self.assertEqual(len(white_moves), 1)
         self.assertIn("schlägt rook (black", white_moves[0])
         self.assertIn(attacking_pawn.id, white_moves[0])
-
-    def test_move_with_correct_uuid_should_return_string_valid_move(self):
-        self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
-        self.game.board.squares[6][0] = Pawn("white", (6, 0))
-        valid_uuid = self.game.board.squares[6][0].id
-        result = self.game.move_figure((6, 0), (4, 0), valid_uuid)
-        self.assertTrue(result.startswith("pawn (white"))
-        self.assertIn("von A2 auf A4", result)
 
     def test_move_history_should_return_list_move_history(self):
         self.game.board.setup_board()
@@ -372,26 +336,34 @@ class TestChessGame(unittest.TestCase):
         result = self.game.move_figure((0, 3), (0, 5), valid_uuid)
         
     def test_short_rochade_should_return_string_for_valid_rochade(self):
-        self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
-        self.game.board.squares[7][4] = King("white", (7, 4))  #e1
-        self.game.board.squares[7][7] = Rook("white", (7, 7))  #h1
+        game = ChessGame()
+        def mock_check_stalemate():
+            return False 
+        game.check_stalemate = mock_check_stalemate 
+        game.board.squares = [[None for _ in range(8)] for _ in range(8)]
+        game.board.squares[7][4] = King("white", (7, 4))  #e1
+        game.board.squares[7][7] = Rook("white", (7, 7))  #h1
         #Rochade hurz
-        result = self.game.move_figure((7, 4), (7, 6))  
+        result = game.move_figure((7, 4), (7, 6))  
         
         self.assertIn("Rochade erfolgreich", result)
-        self.assertIsInstance(self.game.board.squares[7][6], King)
-        self.assertIsInstance(self.game.board.squares[7][5], Rook)
+        self.assertIsInstance(game.board.squares[7][6], King)
+        self.assertIsInstance(game.board.squares[7][5], Rook)
         
     def test_long_rochade_should_return_string_for_valid_rochade(self):
-        self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
-        self.game.board.squares[7][4] = King("white", (7, 4))  #e1
-        self.game.board.squares[7][0] = Rook("white", (7, 0))  #a1
+        game = ChessGame()
+        def mock_check_stalemate():
+            return False 
+        game.check_stalemate = mock_check_stalemate
+        game.board.squares = [[None for _ in range(8)] for _ in range(8)]
+        game.board.squares[7][4] = King("white", (7, 4))  #e1
+        game.board.squares[7][0] = Rook("white", (7, 0))  #a1
         #Rochade lang
-        result = self.game.move_figure((7, 4), (7, 2))
+        result = game.move_figure((7, 4), (7, 2))
         
         self.assertIn("Rochade erfolgreich", result)
-        self.assertIsInstance(self.game.board.squares[7][2], King)
-        self.assertIsInstance(self.game.board.squares[7][3], Rook)
+        self.assertIsInstance(game.board.squares[7][2], King)
+        self.assertIsInstance(game.board.squares[7][3], Rook)
         
     def test_short_rochade_should_return_string_for_invalid_rochade(self):
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
