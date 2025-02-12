@@ -58,7 +58,7 @@ def move_figure(game_id: str, start_pos: str, end_pos: str):
         move_result = game.move_figure((start_row, start_col), (end_row, end_col))
         return {"message": move_result, "game_state": game.get_game_state()}
     except ChessException as e:
-        raise HTTPException(status_code=e.status_code, detail=e.message)
+        raise HTTPException(status_code=e.status_code, detail=e.message)    
 
 @app.get("/")
 def home():
