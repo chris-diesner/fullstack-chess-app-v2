@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { Figure } from "../models/Figure";
 import "../styles/chessboard.css";
 import ChessSquare from "./ChessSquare";
+import ChessModal from "./ChessModal";
 
 type Props = {
   gameId: string | null;
@@ -11,6 +12,8 @@ type Props = {
 const ChessBoard = ({ gameId, onBoardChange }: Props) => {
   const [board, setBoard] = useState<(Figure | null)[][]>(Array(8).fill(Array(8).fill(null)));
   const gameIdRef = useRef<string | null>(gameId);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [modalMessage, setModalMessage] = useState<string | null>(null);
 
   console.log("🔍 ChessBoard.tsx gerendert mit gameId:", gameId);
 
@@ -47,17 +50,28 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
     })
-      .then((response) => response.json())
+      .then(async(response) => {
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail);
+        }
+        return response.json();
+      })
       .then((data) => {
         setBoard(data.game_state.board);
         onBoardChange(data.game_state.board);
       })
   
-      .catch((err) => console.error("Fehler beim Zug:", err));
+      .catch((err) => {
+        console.error("Fehler beim Zug:", err.message);
+        setModalMessage(err.message);
+        setShowModal(true);
+      });
   };
 
   return (
     <div className="chessboard">
+      <ChessModal show={showModal} handleClose={() => setShowModal(false)} message={modalMessage || ""} />
       {board.map((row, rowIndex) =>
         row.map((figure, colIndex) => (
           <ChessSquare

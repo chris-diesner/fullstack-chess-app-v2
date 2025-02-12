@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
 import HomePage from "./pages/HomePage";
 import ChessGame from "./pages/ChessGame";
 import AboutPage from "./pages/AboutPage";
