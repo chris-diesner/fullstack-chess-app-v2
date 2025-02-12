@@ -59,6 +59,28 @@ def move_figure(game_id: str, start_pos: str, end_pos: str):
         return {"message": move_result, "game_state": game.get_game_state()}
     except ChessException as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)    
+    
+@game_router.get("/{game_id}/history")
+def get_move_history(game_id: str):
+    game = games.get(game_id)
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    def parse_move(move_str: str):
+        """Extrahiert Figur, Start- und Endposition aus dem gespeicherten Zug-String"""
+        parts = move_str.split(" ")
+        return {
+            "figure": parts[0],
+            "start": parts[-3].lower(),
+            "end": parts[-1].lower() 
+        }
+
+    history = {
+        "white_moves": [parse_move(move) for move in game.white_player.move_history],
+        "black_moves": [parse_move(move) for move in game.black_player.move_history]
+    }
+    return history
+
 
 @app.get("/")
 def home():

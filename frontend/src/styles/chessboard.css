@@ -81,3 +81,17 @@ button {
 button:hover {
   background-color: #0056b3;
 }
+
+.move-list {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.move-list ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.move-list li {
+  padding: 2px 0;
+}

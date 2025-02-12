@@ -454,3 +454,30 @@ def test_post_fools_mate_should_return_200OK_and_updated_boards_after_every_move
 }
 
     assert response.json() == expected_board_4
+    
+def test_get_history_should_return_200OK_and_empty_history(client):
+    response = client.post("/game/new")
+    assert response.status_code == 200
+    game_id = response.json()["game_id"]
+    response = client.get(f"/game/{game_id}/history")
+    assert response.status_code == 200
+    assert response.json() == {"white_moves": [], "black_moves": []}
+
+def test_get_history_should_return_200OK_and_history_after_moves(client):
+    response = client.post("/game/new")
+    assert response.status_code == 200
+    game_id = response.json()["game_id"]
+    client.post(f"/game/{game_id}/move?start_pos=f2&end_pos=f3")
+    client.post(f"/game/{game_id}/move?start_pos=e7&end_pos=e5")
+    client.post(f"/game/{game_id}/move?start_pos=g2&end_pos=g4")
+    response = client.get(f"/game/{game_id}/history")
+    assert response.status_code == 200
+    assert response.json() == {
+    "white_moves": [
+        {"figure": "pawn", "start": "f2", "end": "f3"},
+        {"figure": "pawn", "start": "g2", "end": "g4"}
+    ],
+    "black_moves": [
+        {"figure": "pawn", "start": "e7", "end": "e5"}
+    ]
+}
