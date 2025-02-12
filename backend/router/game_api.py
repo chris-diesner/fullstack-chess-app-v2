@@ -66,21 +66,11 @@ def get_move_history(game_id: str):
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
 
-    def parse_move(move_str: str):
-        """Extrahiert Figur, Start- und Endposition aus dem gespeicherten Zug-String"""
-        parts = move_str.split(" ")
-        return {
-            "figure": parts[0],
-            "start": parts[-3].lower(),
-            "end": parts[-1].lower() 
-        }
-
     history = {
-        "white_moves": [parse_move(move) for move in game.white_player.move_history],
-        "black_moves": [parse_move(move) for move in game.black_player.move_history]
+        "white_moves": game.white_player.move_history,
+        "black_moves": game.black_player.move_history
     }
     return history
-
 
 @app.get("/")
 def home():

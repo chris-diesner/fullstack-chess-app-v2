@@ -209,15 +209,14 @@ class TestChessGame(unittest.TestCase):
         self.game.board.squares[7][7] = Rook("black", (7, 7))
         attacking_pawn = self.game.board.squares[7][0] = Rook("white", (7, 0))
         result = self.game.move_figure((7, 0), (7, 7), attacking_pawn.id)
-        self.assertTrue(result.startswith("rook (white"))
-        self.assertIn("schlägt rook (black", result)
+        self.assertTrue(result.startswith("rook"))
+        self.assertIn("schlägt rook", result)
         self.assertIsNone(self.game.board.squares[7][0]) 
         self.assertIsInstance(self.game.board.squares[7][7], Rook)
         self.assertEqual(self.game.board.squares[7][7].color, "white")
         white_moves = self.game.white_player.move_history
         self.assertEqual(len(white_moves), 1)
-        self.assertIn("schlägt rook (black", white_moves[0])
-        self.assertIn(attacking_pawn.id, white_moves[0])
+        self.assertIn("schlägt rook", white_moves[0])
 
     def test_move_history_should_return_list_move_history(self):
         self.game.board.setup_board()

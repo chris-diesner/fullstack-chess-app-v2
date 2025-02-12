@@ -222,7 +222,8 @@ class ChessGame:
 
         move_notation = (
             f"Rochade {'kurz' if direction == 1 else 'lang'}: "
-            f"King ({king.color}, UUID: {king.id}) and Rook ({rook.color}, UUID: {rook.id})"
+            f"King ({king.color}, UUID: {king.id}) ({rook.color}, UUID: {rook.id})"
+            f"von {self.convert_to_coordinates(start_pos)} auf {self.convert_to_coordinates(end_pos)}"
         )
         self.get_current_player().record_move(move_notation)
         return True
@@ -329,6 +330,7 @@ class ChessGame:
                     move_notation = (
                         f"{figure.name} ({figure.color}, UUID: {figure.id}) schlägt "
                         f"{captured_pawn.name} ({captured_pawn.color}, UUID: {captured_pawn.id}) "
+                        f"auf {self.convert_to_coordinates((captured_pawn.position))} "
                         f"en passant von {self.convert_to_coordinates(start_pos)} auf {self.convert_to_coordinates(end_pos)}"
                     )
                     

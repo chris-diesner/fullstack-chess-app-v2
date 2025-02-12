@@ -1,12 +1,19 @@
 import pytest
+import uuid
+from unittest.mock import patch
 from fastapi.testclient import TestClient
 from app import app
 from chess_game import ChessGame
+from figures.figure import Pawn
 
 
 @pytest.fixture(autouse=True)
 def reset_game(client):
-    client.post("/game/reset")  
+    client.post("/game/reset")
+    
+@pytest.fixture
+def fixed_uuid():
+    return uuid.UUID("12345678-1234-5678-1234-567812345678")  
 
 @pytest.fixture
 def client():
@@ -463,21 +470,27 @@ def test_get_history_should_return_200OK_and_empty_history(client):
     assert response.status_code == 200
     assert response.json() == {"white_moves": [], "black_moves": []}
 
-def test_get_history_should_return_200OK_and_history_after_moves(client):
+@patch("uuid.uuid4", return_value=uuid.UUID("12345678-1234-5678-1234-567812345678"))
+def test_get_history_should_return_200OK_and_history_after_moves(mock_uuid, client):
     response = client.post("/game/new")
     assert response.status_code == 200
     game_id = response.json()["game_id"]
+
     client.post(f"/game/{game_id}/move?start_pos=f2&end_pos=f3")
     client.post(f"/game/{game_id}/move?start_pos=e7&end_pos=e5")
     client.post(f"/game/{game_id}/move?start_pos=g2&end_pos=g4")
+
     response = client.get(f"/game/{game_id}/history")
     assert response.status_code == 200
-    assert response.json() == {
-    "white_moves": [
-        {"figure": "pawn", "start": "f2", "end": "f3"},
-        {"figure": "pawn", "start": "g2", "end": "g4"}
-    ],
-    "black_moves": [
-        {"figure": "pawn", "start": "e7", "end": "e5"}
-    ]
-}
+
+    expected_response = {
+        "white_moves": [
+            "pawn (white, UUID: 12345678-1234-5678-1234-567812345678) von F2 auf F3",
+            "pawn (white, UUID: 12345678-1234-5678-1234-567812345678) von G2 auf G4"
+        ],
+        "black_moves": [
+            "pawn (black, UUID: 12345678-1234-5678-1234-567812345678) von E7 auf E5"
+        ]
+    }
+
+    assert response.json() == expected_response
