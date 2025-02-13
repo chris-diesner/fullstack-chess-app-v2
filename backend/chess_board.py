@@ -1,10 +1,9 @@
-from fastapi import FastAPI
-from typing import Any
+from typing import List, Optional
 from figures.figure import Figure, Bishop, Rook, Queen, Pawn, King, Knight
 
 class ChessBoard:
     def __init__(self):
-        self.squares: list[list[Any]] = [[None for _ in range(8)] for _ in range(8)]
+        self.squares: List[List[Optional[Figure]]] = [[None for _ in range(8)] for _ in range(8)]
         self.setup_board()
         
     def notation_to_index(self, notation):
@@ -14,12 +13,10 @@ class ChessBoard:
         return row, col
         
     def setup_board(self):
-        #pawn aufstellen
         for col in range(8):
             self.squares[6][col] = Pawn("white", (6, col))
             self.squares[1][col] = Pawn("black", (1, col))
             
-        #uebrige Figuren aufstellen
         figures = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
         for col in range(8):
             self.squares[7][col] = figures[col]("white", (7, col))

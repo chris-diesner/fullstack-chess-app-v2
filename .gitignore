@@ -1,0 +1,51 @@
+# ---- General ----
+.DS_Store
+Thumbs.db
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+*.pyo
+*.log
+*.sqlite3
+*.db
+
+# ---- Virtual Environments ----
+venv/
+.env
+*.env
+
+# ---- FastAPI & Uvicorn ----
+instance/
+*.pid
+*.log
+*.bak
+*.swp
+
+# ---- Testing & Coverage ----
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+test-reports/
+junit-report.xml
+
+# ---- VS Code ----
+.vscode/
+*.code-workspace
+
+# ---- Frontend (Node.js) ----
+frontend/node_modules/
+frontend/.next/
+frontend/.turbo/
+frontend/dist/
+frontend/.cache/
+frontend/yarn.lock
+frontend/package-lock.json
+frontend/npm-debug.log
+frontend/.env.local
+
+# ---- Git ----
+*.orig
