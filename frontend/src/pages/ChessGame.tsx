@@ -20,7 +20,6 @@ const ChessGame = () => {
         const parts = cleanedMove.split(" ");
     
         if (parts.length < 5) {
-            console.error("⚠️ Unerwartetes Move-Format:", move);
             return move;
         }
     
@@ -30,16 +29,16 @@ const ChessGame = () => {
             const start = parts[parts.length - 3];
             const end = parts[parts.length - 1];
             const capturePosition = parts[parts.length - 7];
-            return `en passant: ${figure} von ${start} auf ${end} schlägt pawn auf ${capturePosition}`;
+            return `en passant: ${figure} ${start} auf ${end} schlägt pawn auf ${capturePosition}`;
         } else if (parts.includes("schlägt")) {
             const capturedFigure = parts[2];
             const start = parts[parts.length - 3];
             const end = parts[parts.length - 1];
-            return `${figure} von ${start} schlägt ${capturedFigure} auf ${end}`;
+            return `${figure} ${start} schlägt ${capturedFigure} auf ${end}`;
         } else {
             const start = parts[parts.length - 3];
             const end = parts[parts.length - 1];
-            return `${figure} von ${start} auf ${end}`;
+            return `${figure} ${start} auf ${end}`;
         }
     };
     
@@ -80,24 +79,22 @@ const ChessGame = () => {
                 <button onClick={startNewGame}>Neues Spiel starten</button>
                 {gameId && <p>Spiel-ID: {gameId}</p>}
             </div>
-            <h3>Zug-Historie</h3>
             <div className="move-list">
                 <strong>Weiß:</strong>
                 <ul>
-                        {moveHistory.white_moves.map((move, index) => (
-    <li key={`w${index}`}>{JSON.stringify(move)}</li>
-))
-}
+                    {moveHistory.white_moves.map((move, index) => (
+                    <li key={`w${index}`}>{JSON.stringify(move)}</li>
+                    ))
+                }
                 </ul>
-
                 <strong>Schwarz:</strong>
                 <ul>
-                        {moveHistory.black_moves.map((move, index) => (
-    <li key={`w${index}`}>{JSON.stringify(move)}</li>
-))
-}
+                    {moveHistory.black_moves.map((move, index) => (
+                    <li key={`w${index}`}>{JSON.stringify(move)}</li>
+                    ))
+                    }
                 </ul>
-                </div>
+            </div>
 
             <DndProvider backend={HTML5Backend}>
                 <ChessBoard gameId={gameId} onBoardChange={setBoardState} />

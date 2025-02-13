@@ -358,12 +358,11 @@ class ChessGame:
                 f"von {self.convert_to_coordinates(start_pos)} auf {self.convert_to_coordinates(end_pos)}"
             )
         
-        print(f"🔍 [DEBUG] Generierte Notation: {notation}")  # Neue Debugging-Ausgabe
         return notation
 
     def execute_move(self, figure, start_pos, end_pos, move_notation):
         if move_notation is None:
-            print(f"🚨 [DEBUG] FEHLER: move_notation ist None für {figure} von {start_pos} nach {end_pos}")
+            return
         
         self.board.squares[end_pos[0]][end_pos[1]] = figure
         self.board.squares[start_pos[0]][start_pos[1]] = None

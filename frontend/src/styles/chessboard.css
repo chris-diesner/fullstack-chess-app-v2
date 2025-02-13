@@ -85,6 +85,10 @@ button:hover {
 .move-list {
   margin-top: 10px;
   font-size: 14px;
+  background-color: #f4f4f4;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .move-list ul {
@@ -94,4 +98,43 @@ button:hover {
 
 .move-list li {
   padding: 2px 0;
+}
+
+.board-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.coordinates-left {
+  position: absolute;
+  left: -10px;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.y-label {
+  height: 60px;
+  line-height: 60px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.coordinates-bottom {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 5px;
+}
+
+.x-label {
+  width: 60px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 16px;
 }

@@ -15,11 +15,8 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalMessage, setModalMessage] = useState<string | null>(null);
 
-  console.log("🔍 ChessBoard.tsx gerendert mit gameId:", gameId);
-
   useEffect(() => {
     if (!gameId) {
-      console.error("🚨 Fehler: gameId ist null in ChessBoard.tsx!");
       return;
     }
 
@@ -28,7 +25,6 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
     fetch(`http://localhost:8000/game/${gameId}/board`)
       .then((response) => response.json())
       .then((data) => {
-        console.log("📥 Board-Daten erhalten:", data);
         const newBoard = data.board.map((row: (Figure | null)[]) =>
           row.map((fig) => (fig ? new Figure(fig.type, fig.color, fig.position) : null))
         );
@@ -36,13 +32,12 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
         onBoardChange(newBoard);
       })
       .catch((err) => console.error("Fehler beim Laden des Schachbretts:", err));
-  }, [gameId]);
+  }, [gameId, onBoardChange]);
 
   const handleMove = (from: string, to: string) => {
     const currentGameId = gameIdRef.current;
 
     if (!currentGameId) {
-      console.error("Fehler: gameId ist null!");
       return;
     }
 
@@ -81,20 +76,38 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
       });
   };
 
+  const x = ["a", "b", "c", "d", "e", "f", "g", "h"];
+  const y = ["8", "7", "6", "5", "4", "3", "2", "1"];
+
   return (
-    <div className="chessboard">
+    <div className="board-container">
       <ChessModal show={showModal} handleClose={() => setShowModal(false)} message={modalMessage || ""} />
-      {board.map((row, rowIndex) =>
-        row.map((figure, colIndex) => (
-          <ChessSquare
-            key={`${rowIndex}-${colIndex}`}
-            row={rowIndex}
-            col={colIndex}
-            figure={figure}
-            onMove={handleMove}
-          />
-        ))
-      )}
+      
+      <div className="coordinates-left">
+        {y.map((y, index) => (
+          <div key={index} className="y-label">{y}</div>
+        ))}
+      </div>
+
+      <div className="chessboard">
+        {board.map((row, rowIndex) =>
+          row.map((figure, colIndex) => (
+            <ChessSquare
+              key={`${rowIndex}-${colIndex}`}
+              row={rowIndex}
+              col={colIndex}
+              figure={figure}
+              onMove={handleMove}
+            />
+          ))
+        )}
+      </div>
+
+      <div className="coordinates-bottom">
+        {x.map((x, index) => (
+          <div key={index} className="x-label">{x}</div>
+        ))}
+      </div>
     </div>
   );
 };

@@ -10,7 +10,7 @@ const ChessModal: React.FC<ChessModalProps> = ({ show, handleClose, message }) =
   return (
     <Modal show={show} onHide={handleClose} centered>
       <Modal.Header closeButton>
-        <Modal.Title>Schach-Hinweis</Modal.Title>
+        <Modal.Title>Hinweis</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <p>{message}</p>

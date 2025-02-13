@@ -105,8 +105,6 @@ def test_post_fools_mate_should_return_200OK_and_updated_boards_after_every_move
     game_id = response.json()["game_id"]
     response = client.get(f"/game/{game_id}/board")
     assert response.status_code == 200
-    print(f"DEBUGGING: Current Player: {response.json()['current_player']}")
-    print(f"DEBUGGING: Status: {response.json()['check_mate_status']}")
     initial_board = response.json()
     expected_initial_board = {
     "game_id": game_id,
@@ -389,8 +387,6 @@ def test_post_fools_mate_should_return_200OK_and_updated_boards_after_every_move
     client.post(f"/game/{game_id}/move?start_pos=d8&end_pos=h4")
     response = client.get(f"/game/{game_id}/board")
     assert response.status_code == 200
-    print(f"DEBUGGING: Current Player: {response.json()['current_player']}")
-    print(f"DEBUGGING: Status: {response.json()['check_mate_status']}")
     expected_board_4 = {
     "game_id": game_id,
     "current_player": "white",
