@@ -22,8 +22,19 @@ class ChessGame:
         return {
             "game_id": self.game_id,
             "board": self.board.get_board_state(),
-            "current_player": self.current_player
+            "current_player": self.current_player,
+            "check_mate_status": self.get_check_mate_stalemate_status()
         }
+        
+    def get_check_mate_stalemate_status(self):
+        status = "normal"
+        if self.is_king_in_checkmate(self.current_player):
+            status = "mate"
+        elif self.is_king_in_check(self.current_player)[0]:
+            status = "check"
+        elif self.check_stalemate():
+            status = "stalemate"
+        return status
 
     def get_current_player(self):
         return self.white_player if self.current_player == "white" else self.black_player
@@ -266,13 +277,9 @@ class ChessGame:
         en_passant_notation = self.handle_en_passant(figure, start_pos, end_pos, target_field)
         if en_passant_notation:
             return en_passant_notation
-
+        
         move_notation = self.generate_move_notation(figure, target_field, start_pos, end_pos)
         self.execute_move(figure, start_pos, end_pos, move_notation)
-
-        if isinstance(figure, Pawn) and end_pos[0] in (0, 7):
-            promotion_choice = self.get_current_player().choose_promotion()
-            self.promote_pawn(end_pos, promotion_choice)
 
         self.last_move = {
             "figure": figure,
@@ -280,7 +287,6 @@ class ChessGame:
             "end_pos": end_pos,
             "two_square_pawn_move": isinstance(figure, Pawn) and abs(start_pos[0] - end_pos[0]) == 2,
         }
-        self.switch_player()
         return move_notation
 
     def validate_target_id(self, target_field):
@@ -364,6 +370,12 @@ class ChessGame:
         figure.position = end_pos
         self.get_current_player().record_move(move_notation)
         figure.move_history.append(move_notation)
+        
+        if isinstance(figure, Pawn) and end_pos[0] in (0, 7):
+            promotion_choice = self.get_current_player().choose_promotion()
+            self.promote_pawn(end_pos, promotion_choice)
+        
+        self.switch_player()
         
         print(f"✅ [DEBUG] {move_notation}")
         print(f"✅ [DEBUG] {self.print_move_history()}")

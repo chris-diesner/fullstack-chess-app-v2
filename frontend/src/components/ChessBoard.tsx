@@ -60,6 +60,18 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
       .then((data) => {
         setBoard(data.game_state.board);
         onBoardChange(data.game_state.board);
+        const status = data.game_state.check_mate_status; 
+        console.log(status);
+        if (status === "check") {
+          setModalMessage("Achtung: Schach!");
+          setShowModal(true);
+        } else if (status === "mate") {
+          setModalMessage("Spiel vorbei: Schachmatt!");
+          setShowModal(true);
+        } else if (status === "stalemate") {
+          setModalMessage("Spiel vorbei: Patt!");
+          setShowModal(true);
+        }
       })
   
       .catch((err) => {

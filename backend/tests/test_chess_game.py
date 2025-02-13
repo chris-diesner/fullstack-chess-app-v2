@@ -156,6 +156,7 @@ class TestChessGame(unittest.TestCase):
         self.game.current_player = "black"
         with self.assertRaises(ChessException) as context:
             self.game.switch_player()
+        self.assertEqual(self.game.get_check_mate_stalemate_status(), "stalemate")
         self.assertEqual(str(context.exception), "Unentschieden! Patt!")
         self.assertEqual(context.exception.status_code, 200)
     
