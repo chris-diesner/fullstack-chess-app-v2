@@ -15,7 +15,7 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalMessage, setModalMessage] = useState<string | null>(null);
 
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
     if (!gameId) {
