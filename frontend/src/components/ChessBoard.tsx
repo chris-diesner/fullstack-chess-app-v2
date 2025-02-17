@@ -14,7 +14,6 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
   const gameIdRef = useRef<string | null>(gameId);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalMessage, setModalMessage] = useState<string | null>(null);
-
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
@@ -23,7 +22,6 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
     }
 
     gameIdRef.current = gameId;
-    console.log("🔍 Backend-URL:", BACKEND_URL);
 
     fetch(`${BACKEND_URL}/game/${gameId}/board`)
       .then((response) => response.json())
@@ -34,7 +32,10 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
         setBoard(newBoard);
         onBoardChange(newBoard);
       })
-      .catch((err) => console.error("Fehler beim Laden des Schachbretts:", err));
+      .catch((err) => {
+        setModalMessage(err.message);
+        setShowModal(true);
+      });
   }, [gameId, onBoardChange, BACKEND_URL]);
 
   const handleMove = (from: string, to: string) => {
@@ -59,7 +60,6 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
         setBoard(data.game_state.board);
         onBoardChange(data.game_state.board);
         const status = data.game_state.check_mate_status; 
-        console.log(status);
         if (status === "check") {
           setModalMessage("Achtung: Schach!");
           setShowModal(true);
@@ -73,7 +73,6 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
       })
   
       .catch((err) => {
-        console.error("Fehler beim Zug:", err.message);
         setModalMessage(err.message);
         setShowModal(true);
       });
