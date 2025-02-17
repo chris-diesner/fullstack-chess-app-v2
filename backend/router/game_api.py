@@ -1,9 +1,11 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from chess_board import ChessBoard
 from chess_game import ChessGame
 from chess_exception import ChessException
 from fastapi.responses import JSONResponse
+from router.auth import get_current_user
+from user import User
 
 app = FastAPI()
 app.state.game = ChessGame()
@@ -33,7 +35,7 @@ async def chess_exception_handler(request, exc: ChessException):
     )
 
 @game_router.post("/new")
-def create_game():
+def create_game(current_user: User = Depends(get_current_user)):
     game = ChessGame()
     game.board.setup_board()
     games[game.game_id] = game
