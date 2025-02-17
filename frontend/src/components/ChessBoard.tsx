@@ -23,6 +23,7 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
     }
 
     gameIdRef.current = gameId;
+    console.log("🔍 Backend-URL:", BACKEND_URL);
 
     fetch(`${BACKEND_URL}/game/${gameId}/board`)
       .then((response) => response.json())
