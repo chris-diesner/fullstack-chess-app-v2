@@ -15,8 +15,8 @@ const ChessGame = () => {
     const [boardState, setBoardState] = useState<(Figure | null)[][]>(Array(8).fill(Array(8).fill(null)));
     const [moveHistory, setMoveHistory] = useState<{white_moves: {figure: string, start: string, end: string}[], black_moves: {figure: string, start: string, end: string}[]}>({white_moves: [], black_moves: []});
 
-    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
-
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+    console.log("🔍 Backend-URL:", BACKEND_URL);
     const parseMoveNotation = (move: string) => {
         const cleanedMove = move.replace(/\s*\(.*?\)/g, "").trim();
         const parts = cleanedMove.split(" ");
