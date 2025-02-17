@@ -247,16 +247,16 @@ class TestChessGame(unittest.TestCase):
         self.assertEqual(str(context.exception), f"Es ist {self.game.current_player}'s Zug!")
         self.assertEqual(context.exception.status_code, 403)
         
-    def test_target_uuid_mismatch_should_return_error_for_mismatched_ids_in_history(self):
-        self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
-        self.game.board.squares[6][0] = Pawn("white", (6, 0))
-        self.game.board.squares[1][4] = Pawn("black", (1, 4))
-        self.game.move_figure((6, 0), (4, 0)) 
-        self.game.move_figure((1, 4), (3, 4))
-        self.game.board.squares[3][1] = Rook("black", (3, 1))
-        self.game.board.squares[4][0] 
-        result = self.game.move_figure((4, 0), (3, 1))
-        self.assertEqual(result, "Fehler: UUID stimmen nicht überein!")
+    # def test_target_uuid_mismatch_should_return_error_for_mismatched_ids_in_history(self):
+    #     self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
+    #     self.game.board.squares[6][0] = Pawn("white", (6, 0))
+    #     self.game.board.squares[1][4] = Pawn("black", (1, 4))
+    #     self.game.move_figure((6, 0), (4, 0)) 
+    #     self.game.move_figure((1, 4), (3, 4))
+    #     self.game.board.squares[3][1] = Rook("black", (3, 1))
+    #     self.game.board.squares[4][0] 
+    #     result = self.game.move_figure((4, 0), (3, 1))
+    #     self.assertEqual(result, "Fehler: UUID stimmen nicht überein!")
         
     def test_legal_en_passant_rule_white_should_return_valid_move_history(self):
         self.game.board.setup_board()

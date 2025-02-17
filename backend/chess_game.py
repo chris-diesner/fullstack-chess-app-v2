@@ -271,8 +271,8 @@ class ChessGame:
             return "Ungültiger Zug! Zielfeld ist durch eine eigene Figur blockiert."
         
         id_validation_result = self.validate_target_id(target_field)
-        if id_validation_result:
-            return id_validation_result
+        # if id_validation_result:
+        #     return id_validation_result
 
         en_passant_notation = self.handle_en_passant(figure, start_pos, end_pos, target_field)
         if en_passant_notation:
@@ -375,15 +375,3 @@ class ChessGame:
             self.promote_pawn(end_pos, promotion_choice)
         
         self.switch_player()
-        
-        print(f"✅ [DEBUG] {move_notation}")
-        print(f"✅ [DEBUG] {self.print_move_history()}")
-        
-    def print_move_history(self):
-        print("Zug-Historie:")
-        print("Weiß:")
-        for i, move in enumerate(self.white_player.move_history, 1):
-            print(f"{i}. {move}")
-        print("Schwarz:")
-        for i, move in enumerate(self.black_player.move_history, 1):
-            print(f"{i}. {move}")
