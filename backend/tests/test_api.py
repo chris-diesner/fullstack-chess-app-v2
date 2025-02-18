@@ -4,8 +4,6 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 from app import app
 from chess_game import ChessGame
-from figures.figure import Pawn
-
 
 @pytest.fixture(autouse=True)
 def reset_game(client):
@@ -23,9 +21,27 @@ def client():
     return test_client
 
 def test_game_lifecycle_should_return_200OK(client):
-    response = client.post("/game/new")
+    response = client.post("/game/lobby/create?username=player1")
     assert response.status_code == 200
     game_id = response.json()["game_id"]
+    assert game_id is not None
+    assert response.json() == {"message": "Lobby erstellt", "game_id": game_id}
+    
+    response = client.post(f"/game/lobby/{game_id}/join?username=player2")
+    assert response.status_code == 200
+    assert response.json() == {"message": "player2 ist der Lobby beigetreten", "game_id": game_id}
+    
+    response = client.post(f"/game/lobby/{game_id}/set_color_and_ready?username=player1&color=white&ready_status=true") 
+    assert response.status_code == 200
+    assert response.json() == {"message": "player1 hat white gewählt und ist bereit", "game_id": game_id}
+    response = client.post(f"/game/lobby/{game_id}/set_color_and_ready?username=player2&color=black&ready_status=true") 
+    assert response.status_code == 200
+    assert response.json() == {"message": "player2 hat black gewählt und ist bereit", "game_id": game_id}
+    
+    response = client.post(f"/game/new?game_id={game_id}")
+    assert response.status_code == 200
+    game_id = response.json()["game_id"]
+    assert response.json() == {"message": "Spiel erfolgreich gestartet", "game_id": game_id}
     
     response = client.get(f"/game/{game_id}/board")
     assert response.status_code == 200
@@ -34,9 +50,27 @@ def test_game_lifecycle_should_return_200OK(client):
     assert response.status_code == 200
     
 def test_get_board_should_return_200OK_and_correct_positions(client):
-    response = client.post("/game/new")
+    response = client.post("/game/lobby/create?username=player1")
     assert response.status_code == 200
     game_id = response.json()["game_id"]
+    assert game_id is not None
+    assert response.json() == {"message": "Lobby erstellt", "game_id": game_id}
+    
+    response = client.post(f"/game/lobby/{game_id}/join?username=player2")
+    assert response.status_code == 200
+    assert response.json() == {"message": "player2 ist der Lobby beigetreten", "game_id": game_id}
+    
+    response = client.post(f"/game/lobby/{game_id}/set_color_and_ready?username=player1&color=white&ready_status=true") 
+    assert response.status_code == 200
+    assert response.json() == {"message": "player1 hat white gewählt und ist bereit", "game_id": game_id}
+    response = client.post(f"/game/lobby/{game_id}/set_color_and_ready?username=player2&color=black&ready_status=true") 
+    assert response.status_code == 200
+    assert response.json() == {"message": "player2 hat black gewählt und ist bereit", "game_id": game_id}
+    
+    response = client.post(f"/game/new?game_id={game_id}")
+    assert response.status_code == 200
+    game_id = response.json()["game_id"]
+    assert response.json() == {"message": "Spiel erfolgreich gestartet", "game_id": game_id}
     expected_board = {
         "game_id": game_id,
         "current_player": "white",
@@ -100,9 +134,28 @@ def test_get_board_should_return_200OK_and_correct_positions(client):
     assert data == expected_board
 
 def test_post_fools_mate_should_return_200OK_and_updated_boards_after_every_move(client):
-    response = client.post("/game/new")
+    response = client.post("/game/lobby/create?username=player1")
     assert response.status_code == 200
     game_id = response.json()["game_id"]
+    assert game_id is not None
+    assert response.json() == {"message": "Lobby erstellt", "game_id": game_id}
+    
+    response = client.post(f"/game/lobby/{game_id}/join?username=player2")
+    assert response.status_code == 200
+    assert response.json() == {"message": "player2 ist der Lobby beigetreten", "game_id": game_id}
+    
+    response = client.post(f"/game/lobby/{game_id}/set_color_and_ready?username=player1&color=white&ready_status=true") 
+    assert response.status_code == 200
+    assert response.json() == {"message": "player1 hat white gewählt und ist bereit", "game_id": game_id}
+    response = client.post(f"/game/lobby/{game_id}/set_color_and_ready?username=player2&color=black&ready_status=true") 
+    assert response.status_code == 200
+    assert response.json() == {"message": "player2 hat black gewählt und ist bereit", "game_id": game_id}
+    
+    response = client.post(f"/game/new?game_id={game_id}")
+    assert response.status_code == 200
+    game_id = response.json()["game_id"]
+    assert response.json() == {"message": "Spiel erfolgreich gestartet", "game_id": game_id}
+    
     response = client.get(f"/game/{game_id}/board")
     assert response.status_code == 200
     initial_board = response.json()
@@ -469,18 +522,54 @@ def test_post_fools_mate_should_return_200OK_and_updated_boards_after_every_move
     assert response.json() == expected_board_4
     
 def test_get_history_should_return_200OK_and_empty_history(client):
-    response = client.post("/game/new")
+    response = client.post("/game/lobby/create?username=player1")
     assert response.status_code == 200
     game_id = response.json()["game_id"]
+    assert game_id is not None
+    assert response.json() == {"message": "Lobby erstellt", "game_id": game_id}
+    
+    response = client.post(f"/game/lobby/{game_id}/join?username=player2")
+    assert response.status_code == 200
+    assert response.json() == {"message": "player2 ist der Lobby beigetreten", "game_id": game_id}
+    
+    response = client.post(f"/game/lobby/{game_id}/set_color_and_ready?username=player1&color=white&ready_status=true") 
+    assert response.status_code == 200
+    assert response.json() == {"message": "player1 hat white gewählt und ist bereit", "game_id": game_id}
+    response = client.post(f"/game/lobby/{game_id}/set_color_and_ready?username=player2&color=black&ready_status=true") 
+    assert response.status_code == 200
+    assert response.json() == {"message": "player2 hat black gewählt und ist bereit", "game_id": game_id}
+    
+    response = client.post(f"/game/new?game_id={game_id}")
+    assert response.status_code == 200
+    game_id = response.json()["game_id"]
+    assert response.json() == {"message": "Spiel erfolgreich gestartet", "game_id": game_id}
     response = client.get(f"/game/{game_id}/history")
     assert response.status_code == 200
     assert response.json() == {"white_moves": [], "black_moves": []}
 
 @patch("uuid.uuid4", return_value=uuid.UUID("12345678-1234-5678-1234-567812345678"))
 def test_get_history_should_return_200OK_and_history_after_moves(mock_uuid, client):
-    response = client.post("/game/new")
+    response = client.post("/game/lobby/create?username=player1")
     assert response.status_code == 200
     game_id = response.json()["game_id"]
+    assert game_id is not None
+    assert response.json() == {"message": "Lobby erstellt", "game_id": game_id}
+    
+    response = client.post(f"/game/lobby/{game_id}/join?username=player2")
+    assert response.status_code == 200
+    assert response.json() == {"message": "player2 ist der Lobby beigetreten", "game_id": game_id}
+    
+    response = client.post(f"/game/lobby/{game_id}/set_color_and_ready?username=player1&color=white&ready_status=true") 
+    assert response.status_code == 200
+    assert response.json() == {"message": "player1 hat white gewählt und ist bereit", "game_id": game_id}
+    response = client.post(f"/game/lobby/{game_id}/set_color_and_ready?username=player2&color=black&ready_status=true") 
+    assert response.status_code == 200
+    assert response.json() == {"message": "player2 hat black gewählt und ist bereit", "game_id": game_id}
+    
+    response = client.post(f"/game/new?game_id={game_id}")
+    assert response.status_code == 200
+    game_id = response.json()["game_id"]
+    assert response.json() == {"message": "Spiel erfolgreich gestartet", "game_id": game_id}
 
     client.post(f"/game/{game_id}/move?start_pos=f2&end_pos=f3")
     client.post(f"/game/{game_id}/move?start_pos=e7&end_pos=e5")

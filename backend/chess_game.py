@@ -7,13 +7,14 @@ import uuid
 board = ChessBoard()
 
 class ChessGame:
-    def __init__(self, white_name="User 1", black_name="User 2"):
+    def __init__(self, white_name: str, black_name: str):
         self.game_id = str(uuid.uuid4())
         self.board = ChessBoard()
         self.current_player = "white"
         self.last_move = None
-        self.white_player = User(white_name, "white")
-        self.black_player = User(black_name, "black")
+        self.white_player = User(white_name)
+        self.black_player = User(black_name)
+
         
     def reset_board(self):
         self.__init__()
