@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import ChessBoard from "../components/ChessBoard";
+import ChessModal from "../components/ChessModal";
 import "../styles/chessboard.css";
 
 type Figure = {
@@ -11,10 +12,11 @@ type Figure = {
 
 const ChessGame = () => {
     const [gameId, setGameId] = useState<string | null>(null);
-    const [isBoardSet, setIsBoardSet] = useState<boolean>(false);
     const [boardState, setBoardState] = useState<(Figure | null)[][]>(Array(8).fill(Array(8).fill(null)));
     const [moveHistory, setMoveHistory] = useState<{white_moves: {figure: string, start: string, end: string}[], black_moves: {figure: string, start: string, end: string}[]}>({white_moves: [], black_moves: []});
-
+    const [showModal, setShowModal] = useState<boolean>(false);
+    const [modalMessage, setModalMessage] = useState<string | null>(null);
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
     const parseMoveNotation = (move: string) => {
         const cleanedMove = move.replace(/\s*\(.*?\)/g, "").trim();
         const parts = cleanedMove.split(" ");
@@ -43,38 +45,42 @@ const ChessGame = () => {
     };
     
     const startNewGame = () => {
-        console.log(isBoardSet)
-        fetch("http://localhost:8000/game/new", { method: "POST" })
+        fetch(`${BACKEND_URL}/game/new`, { method: "POST" })
             .then((res) => res.json())
             .then((data) => {
                 setGameId(data.game_id);
-                setIsBoardSet(true);
                 setMoveHistory({white_moves: [], black_moves: []});
             })
-            .catch((err) => console.error("Fehler beim Starten eines neuen Spiels:", err));
+            .catch((err) => {
+                setModalMessage(err.message);
+                setShowModal(true);
+            });
     };
 
     useEffect(() => {
         if (!gameId || !boardState) return;
 
         const fetchMoveHistory = () => {
-                fetch(`http://localhost:8000/game/${gameId}/history`)
+                fetch(`${BACKEND_URL}/game/${gameId}/history`)
                     .then((res) => res.json())
                     .then((data) => {
-                        console.log("📥 Move-Historie erhalten:", data);
                         setMoveHistory({
                             white_moves: data.white_moves.map(parseMoveNotation),
                             black_moves: data.black_moves.map(parseMoveNotation),
                         });
                     })
-                    .catch((err) => console.error("Fehler beim Abrufen der Move-Historie:", err));
-            };
+                    .catch((err) => {
+                        setModalMessage(err.message);
+                        setShowModal(true);
+                    });
+        };
 
         fetchMoveHistory();
-    }, [gameId, boardState]);
+    }, [gameId, boardState, BACKEND_URL]);
 
     return (
         <div className="game-container">
+            <ChessModal show={showModal} handleClose={() => setShowModal(false)} message={modalMessage || ""} />
             <div className="sidebar">
                 <button onClick={startNewGame}>Neues Spiel starten</button>
                 {gameId && <p>Spiel-ID: {gameId}</p>}

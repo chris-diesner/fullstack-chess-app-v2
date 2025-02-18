@@ -1,38 +1,14 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import APIRouter, HTTPException
 from chess_board import ChessBoard
 from chess_game import ChessGame
 from chess_exception import ChessException
-from fastapi.responses import JSONResponse
-from router.auth import get_current_user
-from user import User
 
-app = FastAPI()
-app.state.game = ChessGame()
 game = ChessGame()
 board = ChessBoard()
 
 game_router = APIRouter()
 
 games = {}
-
-# CORS-Unterstützung für das Frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Für die Entwicklung offen, später einschränken
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.include_router(game_router, prefix="/game", tags=["Game"])
-
-@app.exception_handler(ChessException)
-async def chess_exception_handler(request, exc: ChessException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.message},
-    )
 
 @game_router.post("/new")
 def create_game(current_user: User = Depends(get_current_user)):
@@ -73,11 +49,3 @@ def get_move_history(game_id: str):
         "black_moves": game.black_player.move_history
     }
     return history
-
-@app.get("/")
-def home():
-    return {"message": "Welcome to the Fullstack Chess API!"}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=10000)

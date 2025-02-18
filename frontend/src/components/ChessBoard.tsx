@@ -14,6 +14,7 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
   const gameIdRef = useRef<string | null>(gameId);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalMessage, setModalMessage] = useState<string | null>(null);
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
     if (!gameId) {
@@ -22,7 +23,7 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
 
     gameIdRef.current = gameId;
 
-    fetch(`http://localhost:8000/game/${gameId}/board`)
+    fetch(`${BACKEND_URL}/game/${gameId}/board`)
       .then((response) => response.json())
       .then((data) => {
         const newBoard = data.board.map((row: (Figure | null)[]) =>
@@ -31,8 +32,11 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
         setBoard(newBoard);
         onBoardChange(newBoard);
       })
-      .catch((err) => console.error("Fehler beim Laden des Schachbretts:", err));
-  }, [gameId, onBoardChange]);
+      .catch((err) => {
+        setModalMessage(err.message);
+        setShowModal(true);
+      });
+  }, [gameId, onBoardChange, BACKEND_URL]);
 
   const handleMove = (from: string, to: string) => {
     const currentGameId = gameIdRef.current;
@@ -41,7 +45,7 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
       return;
     }
 
-    fetch(`http://localhost:8000/game/${currentGameId}/move?start_pos=${from}&end_pos=${to}`, { 
+    fetch(`${BACKEND_URL}/game/${currentGameId}/move?start_pos=${from}&end_pos=${to}`, { 
       method: "POST",
       headers: { "Content-Type": "application/json" },
     })
@@ -56,7 +60,6 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
         setBoard(data.game_state.board);
         onBoardChange(data.game_state.board);
         const status = data.game_state.check_mate_status; 
-        console.log(status);
         if (status === "check") {
           setModalMessage("Achtung: Schach!");
           setShowModal(true);
@@ -70,7 +73,6 @@ const ChessBoard = ({ gameId, onBoardChange }: Props) => {
       })
   
       .catch((err) => {
-        console.error("Fehler beim Zug:", err.message);
         setModalMessage(err.message);
         setShowModal(true);
       });
