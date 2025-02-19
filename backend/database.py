@@ -1,7 +1,10 @@
 from pymongo import MongoClient
+from dotenv import load_dotenv
 import os
 
-MONGO_URI = os.getenv("MONGO_URI", "mongodb+srv://cdiesner12:***@cluster2025.fq8uc.mongodb.net/")
+load_dotenv()
+
+MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
 db = client["chess_game"]
 users_collection = db["users"]
