@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from database import users_collection
+from backend.database.mongodb import users_collection
 from user import User, UserCreate, UserResponse
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
