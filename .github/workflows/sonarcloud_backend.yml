@@ -25,7 +25,6 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.projectKey=chris-diesner_fullstack-chess-game-backend \
             -Dsonar.organization=chris-diesner \
-            -Dsonar.branch.name=main \
             -Dsonar.python.version=3.10
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
