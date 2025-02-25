@@ -20,7 +20,7 @@ jobs:
           python -m venv venv
           source venv/bin/activate
           pip install -r requirements.txt
-          pip install pytest pytest-cov  # Falls sie nicht in requirements.txt sind
+          pip install pytest pytest-cov
 
       - name: Run tests with coverage
         working-directory: backend
@@ -28,16 +28,22 @@ jobs:
           source venv/bin/activate
           python -m pytest --cov=backend --cov-report=xml:coverage.xml
 
+      - name: Manually Install Sonar Scanner
+        run: |
+          SONAR_SCANNER_VERSION=5.0.1.3006
+          curl -Lo sonarscanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
+          unzip sonarscanner.zip
+          sudo mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux /opt/sonar-scanner
+          echo "PATH=/opt/sonar-scanner/bin:$PATH" >> $GITHUB_ENV
+
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=chris-diesner_fullstack-chess-game-backend \
+            -Dsonar.organization=chris-diesner \
+            -Dsonar.python.coverage.reportPaths=backend/coverage.xml
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
-        with:
-          projectBaseDir: ./backend
-          args: >
-            -Dsonar.projectKey=chris-diesner_fullstack-chess-game-backend
-            -Dsonar.organization=chris-diesner
-            -Dsonar.python.coverage.reportPaths=backend/coverage.xml
 
       - name: Install jq (for JSON parsing)
         run: sudo apt-get install jq -y
