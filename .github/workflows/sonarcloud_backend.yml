@@ -15,11 +15,18 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
+        working-directory: backend
         run: |
-          pip install pytest pytest-cov
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+          pip install pytest pytest-cov  # Falls sie nicht in requirements.txt sind
 
       - name: Run tests with coverage
-        run: pytest --cov=backend --cov-report=xml:backend/coverage.xml
+        working-directory: backend
+        run: |
+          source venv/bin/activate
+          python -m pytest --cov=backend --cov-report=xml:coverage.xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
@@ -37,8 +44,8 @@ jobs:
 
       - name: Check SonarCloud Quality Gate
         run: |
-          TIMEOUT=180  # Maximal 180 Sekunden warten
-          INTERVAL=10  # Alle 10 Sekunden prüfen
+          TIMEOUT=180
+          INTERVAL=10
           ELAPSED=0
 
           while [[ $ELAPSED -lt $TIMEOUT ]]; do
