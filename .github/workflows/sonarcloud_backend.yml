@@ -39,11 +39,13 @@ jobs:
       - name: SonarCloud Scan
         run: |
           sonar-scanner \
+            -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.projectKey=chris-diesner_fullstack-chess-game-backend \
             -Dsonar.organization=chris-diesner \
             -Dsonar.python.coverage.reportPaths=backend/coverage.xml
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
+
 
       - name: Install jq (for JSON parsing)
         run: sudo apt-get install jq -y
