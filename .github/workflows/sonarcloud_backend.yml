@@ -14,3 +14,8 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
+        with:
+          projectBaseDir: ./backend
+          args: >
+            -Dsonar.projectKey=chris-diesner_fullstack-chess-game-backend
+            -Dsonar.organization=chris-diesner
