@@ -8,6 +8,8 @@ jobs:
     steps:
       - name: 🛎️ Checkout Repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Deaktiviert shallow clone für vollständige Git-Historie
 
       - name: 📥 Install SonarScanner
         run: |
@@ -22,7 +24,8 @@ jobs:
           sonar-scanner \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.projectKey=chris-diesner_fullstack-chess-game-backend \
-            -Dsonar.organization=chris-diesner
-            -Dsonar.branch.name=main
+            -Dsonar.organization=chris-diesner \
+            -Dsonar.branch.name=main \
+            -Dsonar.python.version=3.10
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
