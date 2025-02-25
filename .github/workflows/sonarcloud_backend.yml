@@ -23,8 +23,8 @@ jobs:
         run: |
           sonar-scanner \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.projectKey=chris-diesner_fullstack-chess-game-backend \
+            -Dsonar.projectKey=chris-diesner_fullstack-chess-app-v2-backend \
             -Dsonar.organization=chris-diesner \
             -Dsonar.python.version=3.10
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
