@@ -1,77 +1,16 @@
-name: SonarCloud Backend Analysis
+name: Build
 
 on: [push, pull_request]
 
 jobs:
-  sonarcloud:
+  sonarqube:
+    name: SonarQube
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
         with:
-          python-version: '3.10'
-
-      - name: Install dependencies
-        working-directory: backend
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
-
-      - name: Run tests with coverage
-        working-directory: backend
-        run: |
-          source venv/bin/activate
-          python -m pytest --cov=backend --cov-report=xml:coverage.xml
-
-      - name: Manually Install Sonar Scanner
-        run: |
-          SONAR_SCANNER_VERSION=5.0.1.3006
-          curl -Lo sonarscanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
-          unzip sonarscanner.zip
-          sudo mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux /opt/sonar-scanner
-          echo "PATH=/opt/sonar-scanner/bin:$PATH" >> $GITHUB_ENV
-
-      - name: SonarCloud Scan
-        run: |
-          sonar-scanner \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.projectKey=chris-diesner_fullstack-chess-game-backend \
-            -Dsonar.organization=chris-diesner \
-            -Dsonar.python.coverage.reportPaths=backend/coverage.xml
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
-
-
-      - name: Install jq (for JSON parsing)
-        run: sudo apt-get install jq -y
-
-      - name: Check SonarCloud Quality Gate
-        run: |
-          TIMEOUT=180
-          INTERVAL=10
-          ELAPSED=0
-
-          while [[ $ELAPSED -lt $TIMEOUT ]]; do
-            STATUS=$(curl -s "https://sonarcloud.io/api/qualitygates/project_status?projectKey=chris-diesner_fullstack-chess-game-backend" \
-              -H "Authorization: Bearer ${{ secrets.SONAR_TOKEN_BACKEND }}" | jq -r '.projectStatus.status')
-
-            if [[ "$STATUS" == "OK" ]]; then
-              echo "✅ SonarCloud Quality Gate passed!"
-              exit 0
-            elif [[ "$STATUS" == "ERROR" ]]; then
-              echo "❌ SonarCloud Quality Gate failed!"
-              exit 1
-            fi
-
-            echo "⏳ Waiting for SonarCloud analysis to complete... ($ELAPSED/$TIMEOUT seconds elapsed)"
-            sleep $INTERVAL
-            ELAPSED=$((ELAPSED + INTERVAL))
-          done
-
-          echo "❌ SonarCloud Quality Gate check timed out!"
-          exit 1
