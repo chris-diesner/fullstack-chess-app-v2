@@ -1,19 +1,19 @@
-name: SonarCloud Analysis
-
-on: [push, pull_request]
-
+name: Build
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
 jobs:
-  sonarcloud:
+  sonarqube:
+    name: SonarQube
     runs-on: ubuntu-latest
     steps:
-      - name: 🛎️ Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: 🔍 SonarCloud Scan
-        run: |
-          sonar-scanner \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.projectKey=chris-diesner_fullstack-chess-game-backend \
-            -Dsonar.organization=chris-diesner
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
+          SONAR_TOKEN_BACKEND: ${{ secrets.SONAR_TOKEN_BACKEND }}
