@@ -1,19 +1,27 @@
-name: Build
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    types: [opened, synchronize, reopened]
+name: SonarCloud Analysis
+
+on: [push, pull_request]
+
 jobs:
-  sonarqube:
-    name: SonarQube
+  sonarcloud:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v4
+      - name: 🛎️ Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: 📥 Install SonarScanner
+        run: |
+          SONAR_SCANNER_VERSION=5.0.1.3006
+          curl -Lo sonarscanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
+          unzip sonarscanner.zip
+          sudo mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux /opt/sonar-scanner
+          echo "PATH=/opt/sonar-scanner/bin:$PATH" >> $GITHUB_ENV
+
+      - name: 🔍 SonarCloud Scan
+        run: |
+          sonar-scanner \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.projectKey=chris-diesner_fullstack-chess-game-backend \
+            -Dsonar.organization=chris-diesner
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
