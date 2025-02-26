@@ -7,7 +7,6 @@ from models.figure import FigureColor, Pawn, Rook, Bishop, King, Queen, Knight
 def empty_board():
     return ChessBoard(squares=[[None for _ in range(8)] for _ in range(8)])
 
-""" Tests Pawn """
 def test_is_within_board_should_return_True_for_within_board_OR_False_for_out_board():
     assert MoveValidationService.is_within_board((0, 0)) is True
     assert MoveValidationService.is_within_board((7, 7)) is True
@@ -58,7 +57,6 @@ def test_is_move_valid_pawn_should_return_False_for_invalid_capture_own_color(em
     assert MoveValidationService.is_move_valid(white_pawn, (6, 0), (5, 1), empty_board) is False
     assert MoveValidationService.is_move_valid(black_pawn, (1, 0), (2, 1), empty_board) is False
 
-""" Tests Rook """
 def test_is_move_valid_rook_should_return_True_for_valid_moves(empty_board):
     white_rook = Rook(color=FigureColor.WHITE, position=(7, 0))
     black_rook = Rook(color=FigureColor.BLACK, position=(0, 0))

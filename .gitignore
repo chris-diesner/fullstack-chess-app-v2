@@ -49,3 +49,6 @@ frontend/.env.local
 
 # ---- Git ----
 *.orig
+
+htmlcov/
+.sonar-project.properties

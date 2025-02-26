@@ -41,7 +41,7 @@ Deine neue strukturierte FastAPI-Architektur sieht jetzt so aus:
  │
  ├── main.py               # 🏠 FastAPI-App Einstiegspunkt
 
-
+7da9803fd3f6a3632ac2de53a8d6826a1734ec8b
 
 /chess/
 │── models/
