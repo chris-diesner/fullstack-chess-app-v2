@@ -1,6 +1,9 @@
 # ---- General ----
 .DS_Store
 Thumbs.db
+.trash-*
+.trash/
+.*.txt
 
 # ---- Python ----
 __pycache__/

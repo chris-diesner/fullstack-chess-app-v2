@@ -1,12 +1,8 @@
 from enum import Enum
 from pydantic import BaseModel
 from models.chess_board import ChessBoard
-from models.user import UserResponse
-from typing import List
-
-class PlayerColor(Enum):
-    WHITE = "white"
-    BLACK = "black"
+from models.user import UserInGame
+from datetime import datetime
 
 class GameStatus(Enum):
     RUNNING = "running"
@@ -16,12 +12,9 @@ class GameStatus(Enum):
 class ChessGame(BaseModel):
     
     game_id: str
-    player_white: UserResponse
-    player_black: UserResponse
-    current_turn: PlayerColor = PlayerColor.WHITE
+    time_stamp_start: datetime
+    player_white: UserInGame
+    player_black: UserInGame
+    current_turn: str
     board: ChessBoard
-    move_history: List[str] = []
     status: GameStatus = GameStatus.RUNNING
-
-    def get_current_player(self) -> UserResponse:
-        return self.player_white if self.current_turn == PlayerColor.WHITE else self.player_black

@@ -57,3 +57,35 @@ Deine neue strukturierte FastAPI-Architektur sieht jetzt so aus:
 │── controllers/
 │   ├── chess_game_controller.py ✅ (WebSocket/REST API für Multiplayer)
 │── app.py ✅ (Startet den Server)
+
+
+HILFE MOCK VARIANTEN:
+
+🎯 Wann benutzt du welchen Ansatz?
+Situation	Bester Ansatz
+Du willst alle Methoden von game_repo mocken	✅ MagicMock() für game_service.game_repo
+Du willst nur eine Methode (insert_game) überschreiben	✅ mocker.patch.object()
+Du willst keinen echten Datenbankeintrag in MongoDB	✅ Beides ist möglich
+Dein Test betrifft eine bestimmte ChessGameService-Instanz	✅ MagicMock()
+Dein Test betrifft alle ChessGameRepository-Instanzen	✅ mocker.patch.object()
+🔹 Fazit
+Mocking-Methode	Wann verwenden?	Effekt
+MagicMock() für game_repo	Wenn du eine bestimmte Instanz mocken willst	Nur game_repo wird ersetzt
+mocker.patch.object()	Wenn du eine Methode global mocken willst	Gilt für alle Instanzen von ChessGameRepository
+
+🚀 Extra: Beide Ansätze kombinieren
+
+Falls du sicherstellen willst, dass kein echter MongoDB-Zugriff passiert und trotzdem eine spezifische Instanz von ChessGameService testen willst, kannst du beide Methoden kombinieren:
+
+@pytest.fixture
+def game_service(mocker):
+    # Globale Mocking-Sicherheit für `insert_game`
+    mocker.patch.object(ChessGameRepository, "insert_game", return_value=None)
+    
+    # Lokale Instanz mit `MagicMock`
+    service = ChessGameService()
+    service.game_repo = MagicMock()
+    
+    return service
+
+✅ Jetzt wird insert_game() global überschrieben UND game_repo in game_service gemockt. 🚀

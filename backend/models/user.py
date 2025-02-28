@@ -23,6 +23,13 @@ class UserLobby(BaseModel):
     color: Optional[PlayerColor] = None
     status: PlayerStatus = Field(default=PlayerStatus.NOT_READY)
     
+class UserInGame(BaseModel):
+    user_id: str
+    username: str
+    color: str
+    captured_figures: List[str] = []
+    move_history: List[str] = []
+    
 class UserResponse(UserBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     username: str
