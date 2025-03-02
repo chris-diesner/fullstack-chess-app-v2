@@ -3,12 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from controllers.user_controller import user_router
 from controllers.auth_controller import auth_router
 from controllers.chess_lobby_controller import lobby_router
+from controllers.chess_game_controller import game_router
 from chess_exception import ChessException
 from fastapi.responses import JSONResponse
 
 app = FastAPI()
 app.include_router(user_router, prefix="/users", tags=["Users"])
-# app.include_router(game_router, prefix="/games", tags=["Games"])
+app.include_router(game_router, prefix="/game", tags=["Game"])
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(lobby_router, prefix="/lobby", tags=["Lobby"])
 
