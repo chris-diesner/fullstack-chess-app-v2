@@ -687,3 +687,38 @@ def test_is_king_checkmate_should_return_false_for_no_legal_king_moves_but_possi
     
     is_checkmate_white = MoveValidationService.is_king_checkmate(game, empty_board)
     assert is_checkmate_white is False
+    
+def test_is_stalemate_should_return_true_for_no_legal_moves_and_no_check(empty_board):
+    game = ChessGame(
+        game_id="1234",
+        time_stamp_start="2021-08-01T12:00:00",
+        player_white=UserInGame(
+            user_id="test_user1",
+            username="test_user1",
+            color=PlayerColor.WHITE.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        player_black=UserInGame(
+            user_id="test_user2",
+            username="test_user2",
+            color=PlayerColor.BLACK.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        current_turn=FigureColor.WHITE.value,
+        board=empty_board,
+        status="running"
+    )
+    game.current_turn = FigureColor.WHITE.value
+    
+    white_king = King(color=FigureColor.WHITE, position=(0, 0))
+    black_king = King(color=FigureColor.BLACK, position=(1, 2))
+    black_knight = Knight(color=FigureColor.BLACK, position=(2, 2))
+    
+    empty_board.squares[0][0] = white_king
+    empty_board.squares[1][2] = black_king
+    empty_board.squares[2][2] = black_knight
+    
+    is_stalemate = MoveValidationService.is_stalemate(game, empty_board)
+    assert is_stalemate is True

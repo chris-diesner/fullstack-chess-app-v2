@@ -64,7 +64,13 @@ class ChessGameService:
         game.board.squares[start_pos[0]][start_pos[1]] = None
         figure.position = end_pos
 
-        game.current_turn = PlayerColor.BLACK.value if game.current_turn == PlayerColor.WHITE.value else PlayerColor.WHITE.value          
+        game.current_turn = PlayerColor.BLACK.value if game.current_turn == PlayerColor.WHITE.value else PlayerColor.WHITE.value
+        
+        if not MoveValidationService.is_stalemate(game, game.board):
+            game.status = GameStatus.ENDED
+            self.game_repo.insert_game(game)
+            raise ValueError("Patt! Spiel endet unentschieden!")
+               
         self.game_repo.insert_game(game)
 
         return self.get_game_state(game_id)

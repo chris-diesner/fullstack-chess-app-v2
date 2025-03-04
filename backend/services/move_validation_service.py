@@ -196,7 +196,6 @@ class MoveValidationService:
                                     return False
                                 
         return not has_legal_moves
-
     
     @staticmethod
     def get_positions_between(start_pos, end_pos):
@@ -229,4 +228,22 @@ class MoveValidationService:
 
         return MoveValidationService.is_king_in_check(game, board_copy)[0]
 
+    @staticmethod
+    def is_stalemate(game: ChessGame, board: ChessBoard) -> bool:
+        king_in_check, _ = MoveValidationService.is_king_in_check(game, board)
+        if king_in_check:
+            return 
 
+        for row in range(8):
+            for col in range(8):
+                figure = board.squares[row][col]
+                if figure and figure.color == game.current_turn:
+                    start_pos = (row, col)
+                    for end_row in range(8):
+                        for end_col in range(8):
+                            end_pos = (end_row, end_col)
+                            if MoveValidationService.is_move_valid(figure, start_pos, end_pos, board):
+                                if not MoveValidationService.simulate_move_and_check(game, board, start_pos, end_pos):
+                                    return False
+
+        return True
