@@ -49,51 +49,22 @@ class ChessGameService:
         if figure.color.value != game.current_turn:
             raise ValueError(f"Es ist {game.current_turn}'s Zug!")
 
-        # Prüfen, ob der Zug gültig ist
         if not MoveValidationService.is_move_valid(figure, start_pos, end_pos, game.board):
             raise ValueError("Ungültiger Zug!")
+        
+        if not MoveValidationService.is_king_in_check(game, game.board):
+            raise ValueError("König ist im Schach!")
+        
+        if not MoveValidationService.is_king_checkmate(game, game.board):
+            game.status = GameStatus.ENDED
+            self.game_repo.insert_game(game)
+            raise ValueError("Schachmatt! Spieler {game.current_turn} hat gewonnen!")
 
-        # Zug ausführen
         game.board.squares[end_pos[0]][end_pos[1]] = figure
         game.board.squares[start_pos[0]][start_pos[1]] = None
         figure.position = end_pos
 
-        # Spieler wechseln
         game.current_turn = PlayerColor.BLACK.value if game.current_turn == PlayerColor.WHITE.value else PlayerColor.WHITE.value          
         self.game_repo.insert_game(game)
 
         return self.get_game_state(game_id)
-
-    # def simulate_move_and_check(self, start_pos, end_pos) -> bool:
-    #     """Simuliert einen Zug und prüft, ob der König danach im Schach steht."""
-    #     figure = self.game.board.squares[start_pos[0]][start_pos[1]]
-    #     temp_target = self.game.board.squares[end_pos[0]][end_pos[1]]
-
-    #     # Temporär Zug ausführen
-    #     self.game.board.squares[end_pos[0]][end_pos[1]] = figure
-    #     self.game.board.squares[start_pos[0]][start_pos[1]] = None
-    #     figure.position = end_pos
-
-    #     # Prüfen, ob der König im Schach steht
-    #     king_in_check = self.is_king_in_check(self.game.current_turn)
-
-    #     # Zustand zurücksetzen
-    #     self.game.board.squares[start_pos[0]][start_pos[1]] = figure
-    #     self.game.board.squares[end_pos[0]][end_pos[1]] = temp_target
-    #     figure.position = start_pos
-
-    #     return king_in_check
-
-    # def is_king_in_check(self, player_color: PlayerColor) -> bool:
-    #     """Prüft, ob der eigene König im Schach steht."""
-    #     king_pos = self.game.board.get_king_position(player_color)
-    #     if not king_pos:
-    #         return False
-
-    #     for row in range(8):
-    #         for col in range(8):
-    #             enemy_figure = self.game.board.squares[row][col]
-    #             if enemy_figure and enemy_figure.color != player_color:
-    #                 if MoveValidationService.is_move_valid(enemy_figure, (row, col), king_pos, self.game.board):
-    #                     return True
-    #     return False

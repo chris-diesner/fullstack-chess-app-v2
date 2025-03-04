@@ -1,5 +1,7 @@
 from models.figure import Figure, FigureColor, Pawn, Rook, Knight, Bishop, Queen, King
 from models.chess_board import ChessBoard
+from models.chess_game import ChessGame
+from copy import deepcopy
 
 class MoveValidationService:
 
@@ -116,4 +118,115 @@ class MoveValidationService:
             return True
 
         return False
+
+    @staticmethod
+    def is_king_in_check(game: ChessGame, board: ChessBoard) -> tuple[bool, list]:
+        king = None
+        for row in range(8):
+            for col in range(8):
+                figure = board.squares[row][col]
+                if isinstance(figure, King) and figure.color.value == game.current_turn:
+                    king = figure
+                    king_position = (row, col)
+                    break
+            if king:
+                break
+
+        if not king:
+            raise ValueError("Kein König für den aktuellen Spieler gefunden!")
+
+        attacking_figures = []
+
+        for row in range(8):
+            for col in range(8):
+                attacker = board.squares[row][col]
+                if attacker and attacker.color.value != game.current_turn:
+                    if MoveValidationService.is_move_valid(attacker, (row, col), king_position, board):
+                        attacking_figures.append((attacker, (row, col)))
+
+        return len(attacking_figures) > 0, attacking_figures
+
+    @staticmethod
+    def is_king_checkmate(game: ChessGame, board: ChessBoard) -> bool:
+        king_in_check, attacking_figures = MoveValidationService.is_king_in_check(game, board)
+
+        king = None
+        for row in range(8):
+            for col in range(8):
+                figure = board.squares[row][col]
+                if isinstance(figure, King) and figure.color.value == game.current_turn:
+                    king = figure
+                    king_pos = (row, col)
+                    break
+            if king:
+                break
+
+        if not king:
+            raise ValueError("Kein König für den aktuellen Spieler gefunden!")
+
+        has_legal_moves = False
+        for end_row in range(max(0, king_pos[0] - 1), min(8, king_pos[0] + 2)):
+            for end_col in range(max(0, king_pos[1] - 1), min(8, king_pos[1] + 2)):
+                if (end_row, end_col) != king_pos:
+                    if MoveValidationService.is_move_valid(king, king_pos, (end_row, end_col), board):
+                        if not MoveValidationService.simulate_move_and_check(game, board, king_pos, (end_row, end_col)):
+                            has_legal_moves = True
+                            break
+            if has_legal_moves:
+                break
+            
+        if len(attacking_figures) > 1:
+            return True  
+
+        if attacking_figures:
+            attacker_pos = attacking_figures[0][1]
+            blocking_positions = MoveValidationService.get_positions_between(king_pos, attacker_pos)
+
+            for row in range(8):
+                for col in range(8):
+                    figure = board.squares[row][col]
+                    if figure and figure.color.value == game.current_turn:
+                        if MoveValidationService.is_move_valid(figure, (row, col), attacker_pos, board):
+                            if not MoveValidationService.simulate_move_and_check(game, board, (row, col), attacker_pos):
+                                return False
+                            
+                        for block_pos in blocking_positions:
+                            if MoveValidationService.is_move_valid(figure, (row, col), block_pos, board):
+                                if not MoveValidationService.simulate_move_and_check(game, board, (row, col), block_pos):
+                                    return False
+                                
+        return not has_legal_moves
+
+    
+    @staticmethod
+    def get_positions_between(start_pos, end_pos):
+        positions = []
+        start_row, start_col = start_pos
+        end_row, end_col = end_pos
+
+        if start_row == end_row:
+            step = 1 if start_col < end_col else -1
+            for col in range(start_col + step, end_col, step):
+                positions.append((start_row, col))
+        elif start_col == end_col:
+            step = 1 if start_row < end_row else -1
+            for row in range(start_row + step, end_row, step):
+                positions.append((row, start_col))
+        elif abs(start_row - end_row) == abs(start_col - end_col):
+            row_step = 1 if start_row < end_row else -1
+            col_step = 1 if start_col < end_col else -1
+            for i in range(1, abs(start_row - end_row)):
+                positions.append((start_row + i * row_step, start_col + i * col_step))
+        return positions
+    
+    @staticmethod
+    def simulate_move_and_check(game: ChessGame, board: ChessBoard, start_pos: tuple[int, int], end_pos: tuple[int, int]) -> bool:
+        board_copy = deepcopy(board)
+
+        figure = board_copy.squares[start_pos[0]][start_pos[1]]
+        board_copy.squares[end_pos[0]][end_pos[1]] = figure
+        board_copy.squares[start_pos[0]][start_pos[1]] = None
+
+        return MoveValidationService.is_king_in_check(game, board_copy)[0]
+
 

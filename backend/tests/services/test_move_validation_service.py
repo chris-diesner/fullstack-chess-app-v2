@@ -1,5 +1,7 @@
 import pytest
 from services.move_validation_service import MoveValidationService
+from models.chess_game import ChessGame
+from models.user import UserInGame, PlayerColor
 from models.chess_board import ChessBoard
 from models.figure import FigureColor, Pawn, Rook, Bishop, King, Queen, Knight
 
@@ -291,3 +293,397 @@ def test_is_move_valid_knight_should_return_false_for_invalid_capture_moves(empt
     assert MoveValidationService.is_move_valid(white_knight, (7, 1), (6, 3), empty_board) is False
     assert MoveValidationService.is_move_valid(black_knight, (0, 1), (1, 3), empty_board) is False
     
+    
+def test_is_king_in_check_should_return_true_and_list_of_attacker(empty_board):
+    game = ChessGame(
+        game_id="1234",
+        time_stamp_start="2021-08-01T12:00:00",
+        player_white=UserInGame(
+            user_id="test_user1",
+            username="test_user1",
+            color=PlayerColor.WHITE.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        player_black=UserInGame(
+            user_id="test_user2",
+            username="test_user2",
+            color=PlayerColor.BLACK.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        current_turn=FigureColor.WHITE.value,
+        board=empty_board,
+        status="running"
+    )
+    game.current_turn = FigureColor.WHITE.value
+
+    white_king = King(color=FigureColor.WHITE, position=(7, 4))
+    black_king = King(color=FigureColor.BLACK, position=(0, 4))
+
+    empty_board.squares[7][4] = white_king
+    empty_board.squares[0][4] = black_king
+
+    attacking_pawn = Pawn(color=FigureColor.BLACK, position=(6, 3))
+    attacking_rook = Rook(color=FigureColor.BLACK, position=(3, 4))
+
+    empty_board.squares[6][3] = attacking_pawn
+    empty_board.squares[3][4] = attacking_rook
+
+    is_check_white, attackers_black = MoveValidationService.is_king_in_check(game, empty_board)
+    assert is_check_white is True
+    assert (attacking_pawn, (6, 3)) in attackers_black
+    assert (attacking_rook, (3, 4)) in attackers_black
+    assert len(attackers_black) == 2
+
+    game.current_turn = FigureColor.BLACK.value
+    
+    attacking_pawn = Pawn(color=FigureColor.WHITE, position=(1, 3))
+    attacking_rook = Rook(color=FigureColor.WHITE, position=(3, 4))
+    
+    empty_board.squares[1][3] = attacking_pawn
+    empty_board.squares[3][4] = attacking_rook
+
+    is_check_black, attackers_white = MoveValidationService.is_king_in_check(game, empty_board)
+    assert is_check_black is True
+    assert (attacking_pawn, (1, 3)) in attackers_white
+    assert (attacking_rook, (3, 4)) in attackers_white
+    assert len(attackers_white) == 2
+    
+def test_is_king_in_check_should_return_false_and_empty_list(empty_board):
+    game = ChessGame(
+        game_id="1234",
+        time_stamp_start="2021-08-01T12:00:00",
+        player_white=UserInGame(
+            user_id="test_user1",
+            username="test_user1",
+            color=PlayerColor.WHITE.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        player_black=UserInGame(
+            user_id="test_user2",
+            username="test_user2",
+            color=PlayerColor.BLACK.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        current_turn=FigureColor.WHITE.value,
+        board=empty_board,
+        status="running"
+    )
+    game.current_turn = FigureColor.WHITE.value
+    
+    white_king = King(color=FigureColor.WHITE, position=(7, 4))
+    black_king = King(color=FigureColor.BLACK, position=(0, 4))
+    
+    empty_board.squares[7][4] = white_king
+    empty_board.squares[0][4] = black_king
+    
+    is_check_white, attackers_white = MoveValidationService.is_king_in_check(game, empty_board)
+    assert is_check_white is False
+    assert attackers_white == []
+    
+    game.current_turn = FigureColor.BLACK.value
+    
+    is_check_black, attackers_black = MoveValidationService.is_king_in_check(game, empty_board)
+    assert is_check_black is False
+    assert attackers_black == []
+    
+def test_get_positions_between_should_return_list_of_positions_between_start_and_end():
+    start = (0, 0)
+    end = (7, 7)
+    
+    positions = MoveValidationService.get_positions_between(start, end)
+    assert positions == [(1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6)]
+    
+    start = (7, 7)
+    end = (0, 0)
+    
+    positions = MoveValidationService.get_positions_between(start, end)
+    assert positions == [(6, 6), (5, 5), (4, 4), (3, 3), (2, 2), (1, 1)]
+    
+    start = (0, 7)
+    end = (7, 0)
+    
+    positions = MoveValidationService.get_positions_between(start, end)
+    assert positions == [(1, 6), (2, 5), (3, 4), (4, 3), (5, 2), (6, 1)]
+    
+    start = (7, 0)
+    end = (0, 7)
+    
+    positions = MoveValidationService.get_positions_between(start, end)
+    assert positions == [(6, 1), (5, 2), (4, 3), (3, 4), (2, 5), (1, 6)]
+    
+def test_simulate_move_and_check_should_return_true_for_check(empty_board):
+    game = ChessGame(
+        game_id="1234",
+        time_stamp_start="2021-08-01T12:00:00",
+        player_white=UserInGame(
+            user_id="test_user1",
+            username="test_user1",
+            color=PlayerColor.WHITE.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        player_black=UserInGame(
+            user_id="test_user2",
+            username="test_user2",
+            color=PlayerColor.BLACK.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        current_turn=FigureColor.WHITE.value,
+        board=empty_board,
+        status="running"
+    )
+    game.current_turn = FigureColor.WHITE.value
+    
+    white_king = King(color=FigureColor.WHITE, position=(7, 4))
+    black_king = King(color=FigureColor.BLACK, position=(0, 4))
+    
+    empty_board.squares[7][4] = white_king
+    empty_board.squares[0][4] = black_king
+    
+    attacking_queen = Queen(color=FigureColor.BLACK, position=(6, 4))
+    attacking_rook = Rook(color=FigureColor.BLACK, position=(3, 4))
+    
+    empty_board.squares[6][4] = attacking_queen
+    empty_board.squares[3][4] = attacking_rook
+    
+    simulate_move = MoveValidationService.simulate_move_and_check(game, empty_board, (7, 4), (6, 4))
+    assert simulate_move is True
+    
+    game.current_turn = FigureColor.BLACK.value
+    
+    attacking_queen = Queen(color=FigureColor.WHITE, position=(1, 4))
+    attacking_rook = Rook(color=FigureColor.WHITE, position=(3, 4))
+    
+    empty_board.squares[1][4] = attacking_queen
+    empty_board.squares[3][4] = attacking_rook
+    
+    simulate_move = MoveValidationService.simulate_move_and_check(game, empty_board, (0, 4), (1, 4))
+    assert simulate_move is True
+    
+    game.current_turn = FigureColor.WHITE.value
+    
+    attacking_queen = Queen(color=FigureColor.BLACK, position=(3, 5))
+    
+    empty_board.squares[3][5] = attacking_queen
+    
+    simulate_move = MoveValidationService.simulate_move_and_check(game, empty_board, (7, 4), (7, 5))
+    assert simulate_move is True
+    
+    game.current_turn = FigureColor.BLACK.value	
+    
+    attacking_queen = Queen(color=FigureColor.WHITE, position=(3, 3))
+    
+    empty_board.squares[3][3] = attacking_queen
+    
+    simulate_move = MoveValidationService.simulate_move_and_check(game, empty_board, (0, 4), (0, 3))
+    assert simulate_move is True
+    
+def test_simulate_move_and_check_should_return_false_for_possible_escape(empty_board):
+    game = ChessGame(
+        game_id="1234",
+        time_stamp_start="2021-08-01T12:00:00",
+        player_white=UserInGame(
+            user_id="test_user1",
+            username="test_user1",
+            color=PlayerColor.WHITE.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        player_black=UserInGame(
+            user_id="test_user2",
+            username="test_user2",
+            color=PlayerColor.BLACK.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        current_turn=FigureColor.WHITE.value,
+        board=empty_board,
+        status="running"
+    )
+    game.current_turn = FigureColor.WHITE.value
+    
+    white_king = King(color=FigureColor.WHITE, position=(7, 4))
+    black_king = King(color=FigureColor.BLACK, position=(0, 4))
+    
+    empty_board.squares[7][4] = white_king
+    empty_board.squares[0][4] = black_king
+    
+    attacking_queen = Queen(color=FigureColor.BLACK, position=(6, 4))
+    
+    empty_board.squares[6][4] = attacking_queen
+    
+    is_check_white, attackers_black = MoveValidationService.is_king_in_check(game, empty_board)
+    assert is_check_white is True
+    assert (attacking_queen, (6, 4)) in attackers_black
+    assert len(attackers_black) == 1
+    
+    simulate_move = MoveValidationService.simulate_move_and_check(game, empty_board, (7, 4), (6, 4))
+    assert simulate_move is False
+    
+    game.current_turn = FigureColor.BLACK.value
+    
+    attacking_queen = Queen(color=FigureColor.WHITE, position=(5, 4))
+    
+    empty_board.squares[5][4] = attacking_queen
+    
+    is_check_black, attackers_white = MoveValidationService.is_king_in_check(game, empty_board)
+    assert is_check_black is True
+    assert (attacking_queen, (5, 4)) in attackers_white
+    assert len(attackers_white) == 1
+    
+    simulate_move = MoveValidationService.simulate_move_and_check(game, empty_board, (0, 4), (1, 3))
+    assert simulate_move is False
+    
+def test_is_king_checkmate_should_return_true_for_no_possible_moves_and_one_covered_attacker(empty_board):
+    game = ChessGame(
+        game_id="1234",
+        time_stamp_start="2021-08-01T12:00:00",
+        player_white=UserInGame(
+            user_id="test_user1",
+            username="test_user1",
+            color=PlayerColor.WHITE.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        player_black=UserInGame(
+            user_id="test_user2",
+            username="test_user2",
+            color=PlayerColor.BLACK.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        current_turn=FigureColor.WHITE.value,
+        board=empty_board,
+        status="running"
+    )
+    game.current_turn = FigureColor.WHITE.value
+    
+    white_king = King(color=FigureColor.WHITE, position=(7, 4))
+    black_king = King(color=FigureColor.BLACK, position=(0, 4))
+    
+    empty_board.squares[7][4] = white_king
+    empty_board.squares[0][4] = black_king
+    
+    attacking_queen = Queen(color=FigureColor.BLACK, position=(6, 4))
+    attacking_rook = Rook(color=FigureColor.BLACK, position=(3, 4))
+    
+    empty_board.squares[6][4] = attacking_queen
+    empty_board.squares[3][4] = attacking_rook
+    
+    is_check_white, attackers_black = MoveValidationService.is_king_in_check(game, empty_board)
+    assert is_check_white is True
+    assert (attacking_queen, (6, 4)) in attackers_black
+    assert len(attackers_black) == 1
+    
+    is_checkmate_white = MoveValidationService.is_king_checkmate(game, empty_board)
+    assert is_checkmate_white is True
+    
+    game.current_turn = FigureColor.BLACK.value
+    
+    attacking_queen = Queen(color=FigureColor.WHITE, position=(1, 4))
+    attacking_rook = Rook(color=FigureColor.WHITE, position=(3, 4))
+    
+    empty_board.squares[1][4] = attacking_queen
+    empty_board.squares[3][4] = attacking_rook
+    
+    is_check_black, attackers_white = MoveValidationService.is_king_in_check(game, empty_board)
+    assert is_check_black is True
+    assert (attacking_queen, (1, 4)) in attackers_white
+    assert len(attackers_white) == 1
+    
+    is_checkmate_black = MoveValidationService.is_king_checkmate(game, empty_board)
+    assert is_checkmate_black is True
+    
+def test_is_king_checkmate_should_return_true_for_no_legal_king_moves_and_no_direct_attackers(empty_board):
+    game = ChessGame(
+        game_id="1234",
+        time_stamp_start="2021-08-01T12:00:00",
+        player_white=UserInGame(
+            user_id="test_user1",
+            username="test_user1",
+            color=PlayerColor.WHITE.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        player_black=UserInGame(
+            user_id="test_user2",
+            username="test_user2",
+            color=PlayerColor.BLACK.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        current_turn=FigureColor.WHITE.value,
+        board=empty_board,
+        status="running"
+    )
+    game.current_turn = FigureColor.WHITE.value
+    
+    white_king = King(color=FigureColor.WHITE, position=(6, 1))
+    
+    empty_board.squares[6][1] = white_king
+    
+    passive_queen = Queen(color=FigureColor.BLACK, position=(4, 0))
+    passive_rook_1 = Rook(color=FigureColor.BLACK, position=(4, 2))
+    passive_rook_2 = Rook(color=FigureColor.BLACK, position=(7, 7))
+    
+    empty_board.squares[4][0] = passive_queen
+    empty_board.squares[4][2] = passive_rook_1
+    empty_board.squares[7][7] = passive_rook_2
+    
+    is_check_white, attackers_black = MoveValidationService.is_king_in_check(game, empty_board)
+    assert is_check_white is False
+    assert len(attackers_black) == 0
+    
+    is_checkmate_white = MoveValidationService.is_king_checkmate(game, empty_board)
+    assert is_checkmate_white is True
+    
+def test_is_king_checkmate_should_return_false_for_no_legal_king_moves_but_possible_blocker(empty_board):
+    game = ChessGame(
+        game_id="1234",
+        time_stamp_start="2021-08-01T12:00:00",
+        player_white=UserInGame(
+            user_id="test_user1",
+            username="test_user1",
+            color=PlayerColor.WHITE.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        player_black=UserInGame(
+            user_id="test_user2",
+            username="test_user2",
+            color=PlayerColor.BLACK.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        current_turn=FigureColor.WHITE.value,
+        board=empty_board,
+        status="running"
+    )
+    game.current_turn = FigureColor.WHITE.value
+    
+    white_king = King(color=FigureColor.WHITE, position=(7, 0))
+    white_rook = Rook(color=FigureColor.WHITE, position=(6, 7))
+    
+    empty_board.squares[7][0] = white_king
+    empty_board.squares[6][7] = white_rook
+    
+    attacking_queen = Queen(color=FigureColor.BLACK, position=(4, 0))
+    passive_rook_1 = Rook(color=FigureColor.BLACK, position=(4, 1))
+    passive_rook_2 = Rook(color=FigureColor.BLACK, position=(4, 2))
+    
+    empty_board.squares[4][0] = attacking_queen
+    empty_board.squares[4][1] = passive_rook_1
+    empty_board.squares[4][2] = passive_rook_2
+    
+    is_check_white, attackers_black = MoveValidationService.is_king_in_check(game, empty_board)
+    assert is_check_white is True
+    assert (attacking_queen, (4, 0)) in attackers_black
+    assert len(attackers_black) == 1
+    
+    is_checkmate_white = MoveValidationService.is_king_checkmate(game, empty_board)
+    assert is_checkmate_white is False
