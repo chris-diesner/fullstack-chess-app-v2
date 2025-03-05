@@ -516,3 +516,41 @@ def test_move_figure_should_raise_message_for_checkmate(empty_board):
     assert inserted_game.status == GameStatus.ENDED
     
     assert str(e.value) == "Schachmatt! black hat gewonnen! white hat verloren!"
+    
+def test_pawn_promotion_to_queen(game_service, empty_board):
+    game_id = str(uuid.uuid4())
+
+    test_board = empty_board
+    white_pawn = Pawn(color=FigureColor.WHITE, position=(0, 3))
+
+    test_board.squares[0][3] = white_pawn
+
+    game_service.game_repo.find_game_by_id.return_value = ChessGame(
+        game_id=game_id,
+        time_stamp_start=MagicMock(),
+        player_white=UserInGame(
+            user_id=user_lobby_w.user_id,
+            username=user_lobby_w.username,
+            color=PlayerColor.WHITE.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        player_black=UserInGame(
+            user_id=user_lobby_b.user_id,
+            username=user_lobby_b.username,
+            color=PlayerColor.BLACK.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        current_turn="white",
+        board=test_board,
+        status=GameStatus.RUNNING
+    )
+
+    updated_game = game_service.promote_pawn(game_id, (0, 3), "queen")
+
+    assert isinstance(updated_game.board.squares[0][3], Queen)
+    
+    assert updated_game.board.squares[0][3].id == white_pawn.id
+
+    game_service.game_repo.insert_game.assert_called_once_with(updated_game)

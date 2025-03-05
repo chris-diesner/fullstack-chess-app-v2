@@ -305,3 +305,4 @@ class MoveValidationService:
             return True
 
         return False
+    

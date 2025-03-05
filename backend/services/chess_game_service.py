@@ -2,7 +2,7 @@ from models.chess_game import ChessGame, GameStatus
 from models.user import UserInGame, UserLobby, PlayerColor
 from repositories.chess_game_repo import ChessGameRepository
 from services.chess_board_service import ChessBoardService
-from models.figure import Figure, King, Rook, Pawn, FigureColor
+from models.figure import Figure, King, Queen, Bishop, Knight, Rook, Pawn, FigureColor
 from services.move_validation_service import MoveValidationService
 from datetime import datetime
 
@@ -62,14 +62,17 @@ class ChessGameService:
         figure.position = end_pos
         
         game.last_move = {
-            "figure": figure,  # Die Figur, die gerade gezogen wurde
-            "start": start_pos,  # Startposition
-            "end": end_pos,  # Endposition
-            "two_square_pawn_move": isinstance(figure, Pawn) and abs(start_pos[0] - end_pos[0]) == 2  # Nur bei Bauerndoppelzügen
+            "figure": figure,
+            "start": start_pos,
+            "end": end_pos,
+            "two_square_pawn_move": isinstance(figure, Pawn) and abs(start_pos[0] - end_pos[0]) == 2
         }
         
         if isinstance(figure, (King, Rook)):
             figure.has_moved = True
+            
+        if isinstance(figure, Pawn) and (end_pos[0] == 0 or end_pos[0] == 7):
+            self.promote_pawn(game_id, end_pos, "queen")
 
         game.current_turn = PlayerColor.BLACK.value if game.current_turn == PlayerColor.WHITE.value else PlayerColor.WHITE.value
                 
@@ -104,3 +107,35 @@ class ChessGameService:
 
         print(f"🔔 Nachricht an {player_white}: {message}")
         print(f"🔔 Nachricht an {player_black}: {message}")
+
+    
+    def promote_pawn(self, game_id: str, position: tuple[int, int], promotion_choice: str) -> ChessGame:
+        game = self.get_game_state(game_id)
+
+        row, col = position
+        figure = game.board.squares[row][col]
+
+        if not isinstance(figure, Pawn):
+            raise ValueError("Nur Bauern können umgewandelt werden.")
+
+        promotion_row = 0 if figure.color == FigureColor.WHITE else 7
+        if row != promotion_row:
+            raise ValueError("Der Bauer hat die letzte Reihe noch nicht erreicht.")
+
+        valid_choices = {
+            "queen": Queen,
+            "rook": Rook,
+            "bishop": Bishop,
+            "knight": Knight
+        }
+
+        chosen_figure = valid_choices.get(promotion_choice.lower())
+        if chosen_figure is None:
+            raise ValueError("Ungültige Umwandlungsfigur. Wähle: 'queen', 'rook', 'bishop' oder 'knight'.")
+
+        promoted_figure = chosen_figure(color=figure.color, position=position, id=figure.id)
+        game.board.squares[row][col] = promoted_figure
+
+        self.game_repo.insert_game(game)
+
+        return game
