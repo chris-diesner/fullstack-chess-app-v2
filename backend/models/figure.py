@@ -18,6 +18,7 @@ class Pawn(Figure):
 
 class Rook(Figure):
     name: str = "rook"
+    has_moved: bool = False
 
 class Knight(Figure):
     name: str = "knight"

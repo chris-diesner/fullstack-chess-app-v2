@@ -350,6 +350,7 @@ def test_move_figure_should_raise_message_for_check_for_next_current_player(empt
     expected_board.squares[end_pos[0]][end_pos[1]] = moved_figure
     expected_board.squares[start_pos[0]][start_pos[1]] = None
     moved_figure.position = end_pos
+    moved_figure.has_moved = True
         
     game_service.game_repo.find_game_by_id.return_value = ChessGame(
         game_id=game_id,
@@ -368,10 +369,6 @@ def test_move_figure_should_raise_message_for_check_for_next_current_player(empt
     
     inserted_game = game_service.game_repo.insert_game.call_args[0][0]
     assert inserted_game.board.squares == expected_board.squares
-    print(inserted_game.current_turn)
-    print(inserted_game.status)
-    print(inserted_game.board.squares)
-    
     assert str(e.value) == "Schach! white ist im Schach!"
     
 def test_move_figure_should_raise_message_for_stalemate_number_one(empty_board):
