@@ -6,7 +6,7 @@ from copy import deepcopy
 class MoveValidationService:
 
     @staticmethod
-    def is_move_valid(figure: Figure, start_pos: tuple[int, int], end_pos: tuple[int, int], board: ChessBoard) -> bool:
+    def is_move_valid(figure: Figure, start_pos: tuple[int, int], end_pos: tuple[int, int], board: ChessBoard, game: ChessGame) -> bool:
 
         if not MoveValidationService.is_within_board(end_pos):
             return False
@@ -27,6 +27,10 @@ class MoveValidationService:
         if isinstance(figure, Knight):
             return MoveValidationService.is_valid_move_knight(figure, start_pos, end_pos)
         if isinstance(figure, King):
+            if abs(start_pos[1] - end_pos[1]) == 2:
+                if not MoveValidationService.is_valid_castling(figure, start_pos, end_pos, board, game):
+                    return False  # Rochade ist nicht erlaubt
+                return True  # Rochade ist erlaubt
             return MoveValidationService.is_valid_move_king(figure, start_pos, end_pos, board)
 
         return False
@@ -141,7 +145,7 @@ class MoveValidationService:
             for col in range(8):
                 attacker = board.squares[row][col]
                 if attacker and attacker.color.value != game.current_turn:
-                    if MoveValidationService.is_move_valid(attacker, (row, col), king_position, board):
+                    if MoveValidationService.is_move_valid(attacker, (row, col), king_position, board, game):
                         attacking_figures.append((attacker, (row, col)))
 
         return len(attacking_figures) > 0, attacking_figures
@@ -169,7 +173,7 @@ class MoveValidationService:
         for end_row in range(max(0, king_pos[0] - 1), min(8, king_pos[0] + 2)):
             for end_col in range(max(0, king_pos[1] - 1), min(8, king_pos[1] + 2)):
                 if (end_row, end_col) != king_pos:
-                    if MoveValidationService.is_move_valid(figure, king_pos, (end_row, end_col), board):
+                    if MoveValidationService.is_move_valid(figure, king_pos, (end_row, end_col), board, game):
                         if not MoveValidationService.simulate_move_and_check(game, board, king_pos, (end_row, end_col)):
                             return False
 
@@ -185,12 +189,12 @@ class MoveValidationService:
                 if figure and figure.color.value == game.current_turn:
                     start_pos = (row, col)
 
-                    if MoveValidationService.is_move_valid(figure, start_pos, attacker_pos, board):
+                    if MoveValidationService.is_move_valid(figure, start_pos, attacker_pos, board, game):
                         if not MoveValidationService.simulate_move_and_check(game, board, start_pos, attacker_pos):
                             return False
 
                     for block_pos in blocking_positions:
-                        if MoveValidationService.is_move_valid(figure, start_pos, block_pos, board):
+                        if MoveValidationService.is_move_valid(figure, start_pos, block_pos, board, game):
                             if not MoveValidationService.simulate_move_and_check(game, board, start_pos, block_pos):
                                 return False
 
@@ -241,9 +245,45 @@ class MoveValidationService:
                     for end_row in range(8):
                         for end_col in range(8):
                             end_pos = (end_row, end_col)
-                            if MoveValidationService.is_move_valid(figure, start_pos, end_pos, board):
+                            if MoveValidationService.is_move_valid(figure, start_pos, end_pos, board, game):
                                 if not MoveValidationService.simulate_move_and_check(game, board, start_pos, end_pos):
                                     return False
 
         return True
 
+    @staticmethod
+    def is_valid_castling(king: King, start_pos: tuple[int, int], end_pos: tuple[int, int], board: ChessBoard, game: ChessGame) -> bool:
+        if king.has_moved:
+            return False  # König hat sich bereits bewegt
+
+        row, start_col = start_pos
+        _, end_col = end_pos
+
+        # Prüfe ob es eine lange oder kurze Rochade ist
+        if end_col == 2:  # Lange Rochade (Queenside)
+            rook_col = 0
+        elif end_col == 6:  # Kurze Rochade (Kingside)
+            rook_col = 7
+        else:
+            return False  # Ungültige Rochade
+
+        # Stelle sicher, dass sich ein Turm an der richtigen Position befindet
+        rook = board.squares[row][rook_col]
+        if not isinstance(rook, Rook) or rook.has_moved:
+            return False  # Kein Turm oder Turm hat sich bewegt
+
+        # Prüfe, ob Felder zwischen König und Turm frei sind
+        step = 1 if rook_col > start_col else -1
+        for col in range(start_col + step, rook_col, step):
+            if board.squares[row][col] is not None:
+                return False  # Figuren zwischen König und Turm blockieren Rochade
+
+        # Prüfe, ob der König im Schach steht oder durch das Schach zieht
+        if MoveValidationService.is_king_in_check(game, board)[0]:
+            return False  # König steht bereits im Schach
+
+        for col in (start_col + step, start_col + 2 * step):
+            if MoveValidationService.simulate_move_and_check(game, board, start_pos, (row, col)):
+                return False  # König zieht durch das Schach
+
+        return True  # Rochade ist erlaubt

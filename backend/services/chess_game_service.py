@@ -48,7 +48,7 @@ class ChessGameService:
         if figure.color.value != game.current_turn:
             raise ValueError(f"Es ist {game.current_turn}'s Zug!")
 
-        if not MoveValidationService.is_move_valid(figure, start_pos, end_pos, game.board):
+        if not MoveValidationService.is_move_valid(figure, start_pos, end_pos, game.board, game):
             raise ValueError("Ungültiger Zug!")
         
         if MoveValidationService.is_king_in_check(game, game.board)[0]:
