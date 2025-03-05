@@ -17,7 +17,7 @@ class MoveValidationService:
             return False  
 
         if isinstance(figure, Pawn):
-            return MoveValidationService.is_move_valid_pawn(figure, start_pos, end_pos, board)
+            return MoveValidationService.is_move_valid_pawn(figure, start_pos, end_pos, board, game)
         if isinstance(figure, Rook):
             return MoveValidationService.is_valid_move_rook(figure, start_pos, end_pos, board)
         if isinstance(figure, Bishop):
@@ -41,12 +41,11 @@ class MoveValidationService:
         return 0 <= row < 8 and 0 <= col < 8
     
     @staticmethod
-    def is_move_valid_pawn(figure: Pawn, start_pos: tuple[int, int], end_pos: tuple[int, int], board: ChessBoard) -> bool:
+    def is_move_valid_pawn(figure: Pawn, start_pos: tuple[int, int], end_pos: tuple[int, int], board: ChessBoard, game: ChessGame) -> bool:
         start_row, start_col = start_pos
         end_row, end_col = end_pos
-
         direction = -1 if figure.color == FigureColor.WHITE else 1
-        
+
         if end_row == start_row + direction and start_col == end_col and not board.squares[end_row][end_col]:
             return True
         
@@ -57,7 +56,10 @@ class MoveValidationService:
         if end_row == start_row + direction and abs(end_col - start_col) == 1:
             if board.squares[end_row][end_col] and board.squares[end_row][end_col].color != figure.color:
                 return True
-            
+
+            if MoveValidationService.is_valid_en_passant(figure, start_pos, end_pos, board, game):
+                return True
+
         return False
 
     @staticmethod
@@ -283,3 +285,23 @@ class MoveValidationService:
                 return False
 
         return True
+
+    @staticmethod
+    def is_valid_en_passant(figure: Pawn, start_pos: tuple[int, int], end_pos: tuple[int, int], board: ChessBoard, game: ChessGame) -> bool:
+        if not game.last_move:
+            return False 
+
+        last_move = game.last_move
+        last_moved_figure = last_move["figure"]
+        last_move_start, last_move_end = last_move["start"], last_move["end"]
+
+        if (
+            isinstance(last_moved_figure, Pawn)
+            and last_move["two_square_pawn_move"]
+            and abs(last_move_start[0] - last_move_end[0]) == 2
+            and last_move_end[0] == start_pos[0]
+            and last_move_end[1] == end_pos[1]
+        ):
+            return True
+
+        return False

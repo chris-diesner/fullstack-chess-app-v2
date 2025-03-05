@@ -2,7 +2,7 @@ from models.chess_game import ChessGame, GameStatus
 from models.user import UserInGame, UserLobby, PlayerColor
 from repositories.chess_game_repo import ChessGameRepository
 from services.chess_board_service import ChessBoardService
-from models.figure import Figure, King, Rook, FigureColor
+from models.figure import Figure, King, Rook, Pawn, FigureColor
 from services.move_validation_service import MoveValidationService
 from datetime import datetime
 
@@ -60,6 +60,13 @@ class ChessGameService:
         game.board.squares[end_pos[0]][end_pos[1]] = figure
         game.board.squares[start_pos[0]][start_pos[1]] = None
         figure.position = end_pos
+        
+        game.last_move = {
+            "figure": figure,  # Die Figur, die gerade gezogen wurde
+            "start": start_pos,  # Startposition
+            "end": end_pos,  # Endposition
+            "two_square_pawn_move": isinstance(figure, Pawn) and abs(start_pos[0] - end_pos[0]) == 2  # Nur bei Bauerndoppelzügen
+        }
         
         if isinstance(figure, (King, Rook)):
             figure.has_moved = True

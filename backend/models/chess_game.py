@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from models.chess_board import ChessBoard
 from models.user import UserInGame
 from datetime import datetime
+from typing import Optional
 
 class GameStatus(Enum):
     RUNNING = "running"
@@ -18,3 +19,4 @@ class ChessGame(BaseModel):
     current_turn: str
     board: ChessBoard
     status: GameStatus = GameStatus.RUNNING
+    last_move: Optional[dict] = None

@@ -33,7 +33,6 @@ def test_game(empty_board):
         status="running"
     )
 
-
 def test_is_within_board_should_return_true_for_within_board_or_false_for_out_board():
     assert MoveValidationService.is_within_board((0, 0)) is True
     assert MoveValidationService.is_within_board((7, 7)) is True
@@ -51,7 +50,7 @@ def test_is_move_valid_pawn_should_return_true_for_valid_moves(empty_board, test
     assert MoveValidationService.is_move_valid(black_pawn, (1, 0), (2, 0), empty_board, test_game) is True
     assert MoveValidationService.is_move_valid(black_pawn, (1, 0), (3, 0), empty_board, test_game) is True
 
-def test_is_move_valid_pawn_should_return_false_for_invalid_moves(empty_board):
+def test_is_move_valid_pawn_should_return_false_for_invalid_moves(empty_board, test_game):
     white_pawn = Pawn(color="white", position=(6, 0))
     black_pawn = Pawn(color="black", position=(1, 0))
 
@@ -584,7 +583,6 @@ def test_is_valid_castling_should_return_true_for_valid_castling(empty_board, te
 
     assert MoveValidationService.is_valid_castling(black_king, (0, 4), (0, 2), empty_board, test_game) is True
 
-
 def test_is_valid_castling_should_return_false_for_invalid_castling(empty_board, test_game):
     moved_king = King(color=FigureColor.WHITE, position=(7, 4), has_moved=True)
     unmoved_rook = Rook(color=FigureColor.WHITE, position=(7, 7), has_moved=False)
@@ -620,3 +618,35 @@ def test_is_valid_castling_should_return_false_for_invalid_castling(empty_board,
     empty_board.squares[5][5] = attacking_rook
 
     assert MoveValidationService.is_valid_castling(unmoved_king, (7, 4), (7, 6), empty_board, test_game) is False
+
+def test_is_valid_en_passant_should_return_true_for_valid_en_passant(empty_board, test_game):
+    white_pawn = Pawn(color=FigureColor.WHITE, position=(4, 3))
+    black_pawn = Pawn(color=FigureColor.BLACK, position=(4, 2))
+
+    empty_board.squares[4][3] = white_pawn
+    empty_board.squares[4][2] = black_pawn
+
+    test_game.last_move = {
+        "figure": black_pawn,
+        "start": (6, 2),
+        "end": (4, 2),
+        "two_square_pawn_move": True
+    }
+
+    assert MoveValidationService.is_valid_en_passant(white_pawn, (4, 3), (5, 2), empty_board, test_game) is True
+
+def test_is_valid_en_passant_should_return_false_for_invalid_en_passant(empty_board, test_game):
+    white_pawn = Pawn(color=FigureColor.WHITE, position=(4, 3))
+    black_pawn = Pawn(color=FigureColor.BLACK, position=(4, 2))
+
+    empty_board.squares[4][3] = white_pawn
+    empty_board.squares[4][2] = black_pawn
+
+    test_game.last_move = {
+        "figure": Knight(color=FigureColor.BLACK, position=(6, 2)),
+        "start": (6, 2),
+        "end": (4, 1),
+        "two_square_pawn_move": False
+    }
+
+    assert MoveValidationService.is_valid_en_passant(white_pawn, (4, 3), (5, 2), empty_board, test_game) is False
