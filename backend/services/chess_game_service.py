@@ -15,7 +15,6 @@ class ChessGameService:
         chess_board_service.initialize_board()
         chess_board = chess_board_service.board
 
-        
         game = ChessGame(
             game_id=game_id,
             time_stamp_start= datetime.now(),
