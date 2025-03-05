@@ -254,36 +254,32 @@ class MoveValidationService:
     @staticmethod
     def is_valid_castling(king: King, start_pos: tuple[int, int], end_pos: tuple[int, int], board: ChessBoard, game: ChessGame) -> bool:
         if king.has_moved:
-            return False  # König hat sich bereits bewegt
+            return False
 
         row, start_col = start_pos
         _, end_col = end_pos
 
-        # Prüfe ob es eine lange oder kurze Rochade ist
-        if end_col == 2:  # Lange Rochade (Queenside)
+        if end_col == 2:
             rook_col = 0
-        elif end_col == 6:  # Kurze Rochade (Kingside)
+        elif end_col == 6:
             rook_col = 7
         else:
-            return False  # Ungültige Rochade
+            return False
 
-        # Stelle sicher, dass sich ein Turm an der richtigen Position befindet
         rook = board.squares[row][rook_col]
         if not isinstance(rook, Rook) or rook.has_moved:
-            return False  # Kein Turm oder Turm hat sich bewegt
+            return False
 
-        # Prüfe, ob Felder zwischen König und Turm frei sind
         step = 1 if rook_col > start_col else -1
         for col in range(start_col + step, rook_col, step):
             if board.squares[row][col] is not None:
-                return False  # Figuren zwischen König und Turm blockieren Rochade
+                return False
 
-        # Prüfe, ob der König im Schach steht oder durch das Schach zieht
         if MoveValidationService.is_king_in_check(game, board)[0]:
-            return False  # König steht bereits im Schach
+            return False
 
         for col in (start_col + step, start_col + 2 * step):
             if MoveValidationService.simulate_move_and_check(game, board, start_pos, (row, col)):
-                return False  # König zieht durch das Schach
+                return False
 
-        return True  # Rochade ist erlaubt
+        return True
