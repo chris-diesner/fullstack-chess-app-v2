@@ -150,52 +150,59 @@ class MoveValidationService:
     def is_king_checkmate(game: ChessGame, board: ChessBoard) -> bool:
         king_in_check, attacking_figures = MoveValidationService.is_king_in_check(game, board)
 
-        king = None
+        if not king_in_check:
+            return False  # Kein Schachmatt ohne Schach!
+
+        king_pos = None
         for row in range(8):
             for col in range(8):
                 figure = board.squares[row][col]
                 if isinstance(figure, King) and figure.color.value == game.current_turn:
-                    king = figure
                     king_pos = (row, col)
                     break
-            if king:
+            if king_pos:
                 break
 
-        if not king:
+        if not king_pos:
             raise ValueError("Kein König für den aktuellen Spieler gefunden!")
 
-        has_legal_moves = False
+        # 1️⃣ Prüfen, ob der König ausweichen kann
         for end_row in range(max(0, king_pos[0] - 1), min(8, king_pos[0] + 2)):
             for end_col in range(max(0, king_pos[1] - 1), min(8, king_pos[1] + 2)):
                 if (end_row, end_col) != king_pos:
-                    if MoveValidationService.is_move_valid(king, king_pos, (end_row, end_col), board):
+                    if MoveValidationService.is_move_valid(figure, king_pos, (end_row, end_col), board):
                         if not MoveValidationService.simulate_move_and_check(game, board, king_pos, (end_row, end_col)):
-                            has_legal_moves = True
-                            break
-            if has_legal_moves:
-                break
-            
+                            return False  # König kann entkommen → Kein Schachmatt
+
+        # 2️⃣ Falls mehr als ein Angreifer → Schachmatt
         if len(attacking_figures) > 1:
-            return True  
+            return True
 
-        if attacking_figures:
-            attacker_pos = attacking_figures[0][1]
-            blocking_positions = MoveValidationService.get_positions_between(king_pos, attacker_pos)
+        # 3️⃣ Falls ein einzelner Angreifer existiert, kann er blockiert oder geschlagen werden?
+        attacker_pos = attacking_figures[0][1]
+        blocking_positions = MoveValidationService.get_positions_between(king_pos, attacker_pos)
 
-            for row in range(8):
-                for col in range(8):
-                    figure = board.squares[row][col]
-                    if figure and figure.color.value == game.current_turn:
-                        if MoveValidationService.is_move_valid(figure, (row, col), attacker_pos, board):
-                            if not MoveValidationService.simulate_move_and_check(game, board, (row, col), attacker_pos):
-                                return False
-                            
-                        for block_pos in blocking_positions:
-                            if MoveValidationService.is_move_valid(figure, (row, col), block_pos, board):
-                                if not MoveValidationService.simulate_move_and_check(game, board, (row, col), block_pos):
-                                    return False
-                                
-        return not has_legal_moves
+        for row in range(8):
+            for col in range(8):
+                figure = board.squares[row][col]
+                if figure and figure.color.value == game.current_turn:
+                    start_pos = (row, col)
+
+                    # Kann die Figur den Angreifer schlagen?
+                    if MoveValidationService.is_move_valid(figure, start_pos, attacker_pos, board):
+                        if not MoveValidationService.simulate_move_and_check(game, board, start_pos, attacker_pos):
+                            return False  # Angreifer kann geschlagen werden → Kein Schachmatt
+
+                    # Kann die Figur blockieren?
+                    for block_pos in blocking_positions:
+                        if MoveValidationService.is_move_valid(figure, start_pos, block_pos, board):
+                            if not MoveValidationService.simulate_move_and_check(game, board, start_pos, block_pos):
+                                return False  # Blockade möglich → Kein Schachmatt
+
+        # 4️⃣ Falls kein legaler Zug mehr existiert → Schachmatt!
+        return True
+
+
     
     @staticmethod
     def get_positions_between(start_pos, end_pos):
@@ -232,18 +239,22 @@ class MoveValidationService:
     def is_stalemate(game: ChessGame, board: ChessBoard) -> bool:
         king_in_check, _ = MoveValidationService.is_king_in_check(game, board)
         if king_in_check:
-            return 
+            return False  # Stalemate ist nur gültig, wenn der König NICHT im Schach steht.
 
+        # 🔍 Prüfe, ob IRGENDEINE Figur noch einen legalen Zug hat
         for row in range(8):
             for col in range(8):
                 figure = board.squares[row][col]
-                if figure and figure.color == game.current_turn:
+                if figure and figure.color.value == game.current_turn:
                     start_pos = (row, col)
                     for end_row in range(8):
                         for end_col in range(8):
                             end_pos = (end_row, end_col)
                             if MoveValidationService.is_move_valid(figure, start_pos, end_pos, board):
                                 if not MoveValidationService.simulate_move_and_check(game, board, start_pos, end_pos):
-                                    return False
+                                    print(f"🛠 {figure.name} kann nach {end_pos} ziehen! → KEIN Patt")
+                                    return False  # Mindestens 1 legaler Zug existiert → Kein Patt
 
-        return True
+        print("🛠 Keine legalen Züge mehr - Patt erkannt!")
+        return True  # Patt, weil kein legaler Zug mehr existiert
+

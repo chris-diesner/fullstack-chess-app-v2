@@ -599,49 +599,6 @@ def test_is_king_checkmate_should_return_true_for_no_possible_moves_and_one_cove
     is_checkmate_black = MoveValidationService.is_king_checkmate(game, empty_board)
     assert is_checkmate_black is True
     
-def test_is_king_checkmate_should_return_true_for_no_legal_king_moves_and_no_direct_attackers(empty_board):
-    game = ChessGame(
-        game_id="1234",
-        time_stamp_start="2021-08-01T12:00:00",
-        player_white=UserInGame(
-            user_id="test_user1",
-            username="test_user1",
-            color=PlayerColor.WHITE.value,
-            captured_figures=[],
-            move_history=[]
-        ),
-        player_black=UserInGame(
-            user_id="test_user2",
-            username="test_user2",
-            color=PlayerColor.BLACK.value,
-            captured_figures=[],
-            move_history=[]
-        ),
-        current_turn=FigureColor.WHITE.value,
-        board=empty_board,
-        status="running"
-    )
-    game.current_turn = FigureColor.WHITE.value
-    
-    white_king = King(color=FigureColor.WHITE, position=(6, 1))
-    
-    empty_board.squares[6][1] = white_king
-    
-    passive_queen = Queen(color=FigureColor.BLACK, position=(4, 0))
-    passive_rook_1 = Rook(color=FigureColor.BLACK, position=(4, 2))
-    passive_rook_2 = Rook(color=FigureColor.BLACK, position=(7, 7))
-    
-    empty_board.squares[4][0] = passive_queen
-    empty_board.squares[4][2] = passive_rook_1
-    empty_board.squares[7][7] = passive_rook_2
-    
-    is_check_white, attackers_black = MoveValidationService.is_king_in_check(game, empty_board)
-    assert is_check_white is False
-    assert len(attackers_black) == 0
-    
-    is_checkmate_white = MoveValidationService.is_king_checkmate(game, empty_board)
-    assert is_checkmate_white is True
-    
 def test_is_king_checkmate_should_return_false_for_no_legal_king_moves_but_possible_blocker(empty_board):
     game = ChessGame(
         game_id="1234",

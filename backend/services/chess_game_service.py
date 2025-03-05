@@ -52,25 +52,46 @@ class ChessGameService:
         if not MoveValidationService.is_move_valid(figure, start_pos, end_pos, game.board):
             raise ValueError("Ungültiger Zug!")
         
-        if not MoveValidationService.is_king_in_check(game, game.board):
-            raise ValueError("König ist im Schach!")
+        if MoveValidationService.is_king_in_check(game, game.board)[0]:
+            raise ValueError("Zug nicht möglich! Dein König steht im Schach!")
         
-        if not MoveValidationService.is_king_checkmate(game, game.board):
-            game.status = GameStatus.ENDED
-            self.game_repo.insert_game(game)
-            raise ValueError("Schachmatt! Spieler {game.current_turn} hat gewonnen!")
-
+        if MoveValidationService.simulate_move_and_check(game, game.board, start_pos, end_pos):
+            raise ValueError("Zug nicht möglich! Dein König stünde im Schach!")
+        
         game.board.squares[end_pos[0]][end_pos[1]] = figure
         game.board.squares[start_pos[0]][start_pos[1]] = None
         figure.position = end_pos
 
         game.current_turn = PlayerColor.BLACK.value if game.current_turn == PlayerColor.WHITE.value else PlayerColor.WHITE.value
+                
+        king_in_check, _ = MoveValidationService.is_king_in_check(game, game.board)
         
-        if not MoveValidationService.is_stalemate(game, game.board):
+        if MoveValidationService.is_stalemate(game, game.board):
             game.status = GameStatus.ENDED
             self.game_repo.insert_game(game)
             raise ValueError("Patt! Spiel endet unentschieden!")
-               
-        self.game_repo.insert_game(game)
 
-        return self.get_game_state(game_id)
+        if MoveValidationService.is_king_checkmate(game, game.board):
+            game.status = GameStatus.ENDED
+            self.game_repo.insert_game(game)
+            winner = PlayerColor.WHITE.value if game.current_turn == PlayerColor.BLACK.value else PlayerColor.BLACK.value
+            loser = game.current_turn
+            
+            self.send_notification(game, f"Schachmatt! {winner} hat gewonnen! {loser} hat verloren!")
+        
+            raise ValueError(f"Schachmatt! {winner} hat gewonnen! {loser} hat verloren!")
+        
+        self.game_repo.insert_game(game)
+        
+        if king_in_check:
+            raise ValueError(f"Schach! {game.current_turn} ist im Schach!")
+        
+        return game
+    
+    # message handler - WIP - soll noch ausgelagert werden!
+    def send_notification(self, game: ChessGame, message: str):
+        player_white = game.player_white.username
+        player_black = game.player_black.username
+
+        print(f"🔔 Nachricht an {player_white}: {message}")
+        print(f"🔔 Nachricht an {player_black}: {message}")
