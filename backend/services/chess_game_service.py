@@ -61,6 +61,10 @@ class ChessGameService:
         game.board.squares[start_pos[0]][start_pos[1]] = None
         figure.position = end_pos
         
+        active_player = game.player_white if game.current_turn == PlayerColor.WHITE.value else game.player_black
+        notation = f"{figure.position}{start_pos[1]}{start_pos[0]}{end_pos[1]}{end_pos[0]}"
+        active_player.move_history.append(notation)
+        
         game.last_move = {
             "figure": figure,
             "start": start_pos,
@@ -139,3 +143,15 @@ class ChessGameService:
         self.game_repo.insert_game(game)
 
         return game
+    
+    def generate_move_notation(self, game: ChessGame, start_pos: tuple[int, int], end_pos: tuple[int, int]) -> str:
+        figure = game.board.squares[start_pos[0]][start_pos[1]]
+        if figure is None:
+            raise ValueError("Fehler: keine Figure gefunden.")
+
+        notation = f"{figure.notation}{start_pos[1]}{start_pos[0]}{end_pos[1]}{end_pos[0]}"
+        
+        active_player = game.player_white if game.current_turn == PlayerColor.WHITE.value else game.player_black
+        active_player.move_history.append(notation)
+        
+        return notation
