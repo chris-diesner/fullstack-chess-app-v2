@@ -2,7 +2,7 @@ from models.chess_game import ChessGame, GameStatus
 from models.user import UserInGame, UserLobby, PlayerColor
 from repositories.chess_game_repo import ChessGameRepository
 from services.chess_board_service import ChessBoardService
-from models.figure import Figure, King, Queen, Bishop, Knight, Rook, Pawn, FigureColor
+from models.figure import King, Queen, Bishop, Knight, Rook, Pawn, FigureColor
 from services.move_validation_service import MoveValidationService
 from datetime import datetime
 

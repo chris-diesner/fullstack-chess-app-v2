@@ -1,7 +1,7 @@
 import pytest
 from services.chess_board_service import ChessBoardService
 from models.chess_board import ChessBoard
-from models.figure import Figure, FigureColor, Pawn, Rook, Knight, Bishop, Queen, King
+from models.figure import FigureColor, Pawn, Rook, Knight, Bishop, Queen, King
 
 @pytest.fixture
 def empty_board():

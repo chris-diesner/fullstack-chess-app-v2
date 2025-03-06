@@ -1,6 +1,5 @@
 from database.mongodb import games_collection
 from models.chess_game import ChessGame
-from pymongo import ReturnDocument
 
 class ChessGameRepository:
     def insert_game(self, game: ChessGame):

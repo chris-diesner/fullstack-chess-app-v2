@@ -33,7 +33,6 @@ def reset_lobby_service():
 
 @pytest.fixture
 def game_repo(mocker):
-    """Mockt die ChessGameRepository, um DB-Schreibzugriffe zu verhindern."""
     mocker.patch.object(ChessGameRepository, "insert_game", return_value=None)
     service = ChessGameService()
     service.game_repo = MagicMock()
@@ -41,7 +40,6 @@ def game_repo(mocker):
 
 @pytest.fixture
 def mock_chess_game_service(mocker):
-    """Mockt den ChessGameService"""
     mock_service = mocker.MagicMock(spec=ChessGameService)
     mocker.patch("services.chess_game_service.ChessGameService", return_value=mock_service)
     return mock_service

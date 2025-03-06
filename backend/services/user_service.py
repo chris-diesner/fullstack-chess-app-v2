@@ -48,14 +48,3 @@ class UserService:
 
     def delete_user(self, user_id: str) -> bool:
         return self.user_repo.delete_user(user_id)
-
-    # def add_captured_piece(self, user: User, figure):
-    #     user.captured_figures.append(figure)
-    #     self.user_repo.update_user(user)
-
-    # def record_move(self, user: User, move: str):
-    #     user.move_history.append(move)
-    #     self.user_repo.update_user(user)
-
-    # def choose_promotion(self) -> str:
-    #     return "queen"

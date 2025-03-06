@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException
 from services.chess_game_service import ChessGameService
-from models.chess_game import ChessGame
 
 game_router = APIRouter()
 game_service = ChessGameService()
