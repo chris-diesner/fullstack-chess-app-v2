@@ -36,8 +36,13 @@ class ChessGameService:
             raise ValueError("Spiel nicht gefunden.")
         return game
 
-    def move_figure(self, start_pos: tuple[int, int], end_pos: tuple[int, int], game_id: str) -> ChessGame | None:
+    def move_figure(self, start_pos: tuple[int, int], end_pos: tuple[int, int], game_id: str, user_id: str) -> ChessGame | None:
         game = self.get_game_state(game_id)
+        
+        if (game.current_turn == PlayerColor.WHITE.value and user_id != game.player_white.user_id) or \
+            (game.current_turn == PlayerColor.BLACK.value and user_id != game.player_black.user_id):
+                raise ValueError("Nicht dein Zug!")
+
         if game.status != GameStatus.RUNNING:
             raise ValueError("Spiel ist bereits beendet.")
 

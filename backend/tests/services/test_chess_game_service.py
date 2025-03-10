@@ -107,7 +107,7 @@ def test_move_figure_should_raise_error_for_empty_square():
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id)
+        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
         
     assert str(e.value) == "Du hast ein leeres Feld ausgewählt!"
     
@@ -130,7 +130,7 @@ def test_move_figure_should_raise_error_for_game_already_ended():
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id)
+        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
         
     assert str(e.value) == "Spiel ist bereits beendet."
     
@@ -153,7 +153,7 @@ def test_move_figure_should_raise_error_for_wrong_turn():
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id)
+        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
         
     assert str(e.value) == "Es ist black's Zug!"
 
@@ -176,7 +176,7 @@ def test_move_figure_should_raise_error_for_non_legal_move():
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id)
+        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
         
     assert str(e.value) == "Ungültiger Zug!"
     
@@ -209,7 +209,7 @@ def test_move_figure_should_raise_message_leave_king_in_check(empty_board):
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id)
+        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
         
     assert str(e.value) == "Zug nicht möglich! Dein König steht im Schach!"
     
@@ -242,7 +242,7 @@ def test_move_figure_should_raise_message_for_unblock_check(empty_board):
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id)
+        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
         
     assert str(e.value) == "Zug nicht möglich! Dein König stünde im Schach!"
     
@@ -275,7 +275,7 @@ def test_move_figure_should_raise_message_for_moving_king_in_check(empty_board):
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id)
+        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
         
     assert str(e.value) == "Zug nicht möglich! Dein König stünde im Schach!"
     
@@ -317,7 +317,7 @@ def test_move_figure_should_raise_message_for_check_for_next_current_player(empt
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id)
+        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
 
     game_service.game_repo.insert_game.assert_called_once()
     
@@ -364,7 +364,7 @@ def test_move_figure_should_raise_message_for_stalemate_number_one(empty_board):
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id)
+        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
 
     game_service.game_repo.insert_game.assert_called_once()
     
@@ -410,7 +410,7 @@ def test_move_figure_should_raise_message_for_stalemate_number_two(empty_board):
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id)
+        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
 
     game_service.game_repo.insert_game.assert_called_once()
     
@@ -460,7 +460,7 @@ def test_move_figure_should_raise_message_for_checkmate(empty_board):
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id)
+        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
 
     game_service.game_repo.insert_game.assert_called_once()
     
@@ -560,7 +560,7 @@ def test_move_figure_should_update_move_history(game_service):
         status=GameStatus.RUNNING
     )
 
-    game = game_service.move_figure(start_pos, end_pos, game_id)
+    game = game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
 
     assert game.game_id == game_id
     assert game.current_turn == "black"
@@ -624,7 +624,7 @@ def test_move_figure_should_raise_message_for_check_for_next_current_player_and_
     )
 
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id)
+        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
 
     game_service.game_repo.insert_game.assert_called_once()
 
