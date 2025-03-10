@@ -571,3 +571,70 @@ def test_move_figure_should_update_move_history(game_service):
 
     assert game.player_white.move_history == [expected_notation]
     assert game.player_black.move_history == []
+
+def test_move_figure_should_raise_message_for_check_for_next_current_player_and_captured_figures(empty_board):
+    game_service = ChessGameService()
+    game_service.game_repo = MagicMock()
+    
+    game_id = str(uuid.uuid4())
+    test_board = empty_board
+
+    white_king = King(color=FigureColor.WHITE, position=(7, 4))
+    white_rook = Rook(color=FigureColor.WHITE, position=(6, 4))
+    test_board.squares[7][4] = white_king
+    test_board.squares[6][4] = white_rook
+
+    attacking_king = King(color=FigureColor.BLACK, position=(0, 3))
+    attacking_rook = Rook(color=FigureColor.BLACK, position=(0, 4))
+    test_board.squares[0][3] = attacking_king
+    test_board.squares[0][4] = attacking_rook
+
+    start_pos = (0, 4)
+    end_pos = (6, 4)
+
+    expected_board = copy.deepcopy(test_board)
+    moved_figure = expected_board.squares[start_pos[0]][start_pos[1]]
+    captured_figure = expected_board.squares[end_pos[0]][end_pos[1]]
+
+    expected_board.squares[end_pos[0]][end_pos[1]] = moved_figure
+    expected_board.squares[start_pos[0]][start_pos[1]] = None
+    moved_figure.position = end_pos
+    moved_figure.has_moved = True
+
+    game_service.game_repo.find_game_by_id.return_value = ChessGame(
+        game_id=game_id,
+        time_stamp_start=MagicMock(),
+        player_white=UserInGame(
+            user_id=user_lobby_w.user_id,
+            username=user_lobby_w.username,
+            color=PlayerColor.WHITE.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        player_black=UserInGame(
+            user_id=user_lobby_b.user_id,
+            username=user_lobby_b.username,
+            color=PlayerColor.BLACK.value,
+            captured_figures=[],
+            move_history=[]
+        ),
+        current_turn="black",
+        board=test_board,
+        status=GameStatus.RUNNING
+    )
+
+    with pytest.raises(ValueError) as e:
+        game_service.move_figure(start_pos, end_pos, game_id)
+
+    game_service.game_repo.insert_game.assert_called_once()
+
+    inserted_game = game_service.game_repo.insert_game.call_args[0][0]
+    assert inserted_game.board.squares == expected_board.squares
+    assert str(e.value) == "Schach! white ist im Schach!"
+
+    assert len(inserted_game.player_black.captured_figures) == 1
+    assert inserted_game.player_black.captured_figures[0].id == captured_figure.id
+    assert inserted_game.player_black.captured_figures[0].color == captured_figure.color
+    assert inserted_game.player_black.captured_figures[0].position == captured_figure.position
+
+    assert inserted_game.player_white.captured_figures == [] 

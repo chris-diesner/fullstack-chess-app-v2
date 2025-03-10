@@ -5,6 +5,7 @@ from services.chess_board_service import ChessBoardService
 from models.figure import King, Queen, Bishop, Knight, Rook, Pawn, FigureColor
 from services.move_validation_service import MoveValidationService
 from datetime import datetime
+import copy
 
 class ChessGameService:
     def __init__(self):
@@ -57,6 +58,10 @@ class ChessGameService:
         if MoveValidationService.simulate_move_and_check(game, game.board, start_pos, end_pos):
             raise ValueError("Zug nicht möglich! Dein König stünde im Schach!")
         
+        if captured_figure := game.board.squares[end_pos[0]][end_pos[1]]:
+            capturing_player = game.player_black if captured_figure.color == FigureColor.WHITE else game.player_white
+            capturing_player.captured_figures.append(copy.deepcopy(captured_figure)) 
+
         game.board.squares[end_pos[0]][end_pos[1]] = figure
         game.board.squares[start_pos[0]][start_pos[1]] = None
         figure.position = end_pos
@@ -112,7 +117,6 @@ class ChessGameService:
         print(f"🔔 Nachricht an {player_white}: {message}")
         print(f"🔔 Nachricht an {player_black}: {message}")
 
-    
     def promote_pawn(self, game_id: str, position: tuple[int, int], promotion_choice: str) -> ChessGame:
         game = self.get_game_state(game_id)
 
@@ -144,14 +148,3 @@ class ChessGameService:
 
         return game
     
-    def generate_move_notation(self, game: ChessGame, start_pos: tuple[int, int], end_pos: tuple[int, int]) -> str:
-        figure = game.board.squares[start_pos[0]][start_pos[1]]
-        if figure is None:
-            raise ValueError("Fehler: keine Figure gefunden.")
-
-        notation = f"{figure.notation}{start_pos[1]}{start_pos[0]}{end_pos[1]}{end_pos[0]}"
-        
-        active_player = game.player_white if game.current_turn == PlayerColor.WHITE.value else game.player_black
-        active_player.move_history.append(notation)
-        
-        return notation
