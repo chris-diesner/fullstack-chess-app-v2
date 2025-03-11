@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from passlib.context import CryptContext
+from models.user import UserResponse
 from repositories.user_repo import UserRepository
 from jwt.exceptions import ExpiredSignatureError
 import jwt
@@ -48,14 +49,14 @@ class AuthService:
     def verify_password(password: str, hashed_password: str) -> bool:
         return pwd_context.verify(password, hashed_password)
     
-    def authenticate_user(self, username: str, password: str):
+    def authenticate_user(self, username: str, password: str) -> UserResponse | None:
         user_data = self.user_repo.find_user_by_username(username)
         if not user_data:
             return None
-        if not AuthService.verify_password(password, user_data["password_hash"]):
+        if not self.verify_password(password, user_data.password_hash):
             return None
 
-        return user_data
+        return UserResponse(user_id=user_data.user_id, username=user_data.username)
 
     @staticmethod
     def logout(token: str) -> bool:
@@ -73,8 +74,6 @@ class AuthService:
             return False
         except jwt.InvalidTokenError:
             return False
-
-
 
     @staticmethod
     def is_token_revoked(token: str) -> bool:

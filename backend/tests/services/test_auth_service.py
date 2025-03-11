@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 from datetime import timedelta
+from models.user import UserDB, UserResponse
 from services.auth_service import AuthService, token_blacklist, SECRET_KEY, ALGORITHM
 import jwt
 
@@ -43,23 +44,30 @@ def test_verify_password_invalid_should_return_false():
     assert not AuthService.verify_password("invalidpassword", hashed_password)
 
 def test_authenticate_user_should_return_user(user_repo_mock):
-    mock_user_data = {
-        "username": "testuser",
-        "password_hash": AuthService.hash_password("password123")
-    }
-    user_repo_mock.find_user_by_username.return_value = mock_user_data
+    mock_user = UserDB(
+        user_id="123e4567-e89b-12d3-a456-426614174000",
+        username="testuser",
+        password_hash=AuthService.hash_password("password123")
+    )
+
+    user_repo_mock.find_user_by_username.return_value = mock_user
     auth_service = AuthService(user_repo_mock)
     user = auth_service.authenticate_user("testuser", "password123")
 
     assert user is not None
-    assert user["username"] == "testuser"
+    assert isinstance(user, UserResponse)
+    assert user.username == "testuser"
+    assert user.user_id == "123e4567-e89b-12d3-a456-426614174000"
+
 
 def test_authenticate_user_invalid_password_should_return_none(user_repo_mock):
-    mock_user_data = {
-        "username": "testuser",
-        "password_hash": AuthService.hash_password("password123")
-    }
-    user_repo_mock.find_user_by_username.return_value = mock_user_data
+    mock_user = UserDB(
+        user_id="123e4567-e89b-12d3-a456-426614174000",
+        username="testuser",
+        password_hash=AuthService.hash_password("password123")
+    )
+
+    user_repo_mock.find_user_by_username.return_value = mock_user
     auth_service = AuthService(user_repo_mock)
     user = auth_service.authenticate_user("testuser", "wrongpassword")
     
