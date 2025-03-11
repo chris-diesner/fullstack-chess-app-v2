@@ -4,7 +4,6 @@ import {Button, Container, Form, Toast} from "react-bootstrap";
 import {motion} from "framer-motion";
 import '../styles/App.css';
 
-
 type Props = {
     register: (username: string, password: string) => Promise<void>,
 }
