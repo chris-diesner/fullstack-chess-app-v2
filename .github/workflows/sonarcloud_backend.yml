@@ -1,0 +1,77 @@
+name: SonarCloud Monorepo Analysis
+
+on: [push, pull_request]
+
+jobs:
+  backend_sonarcloud:
+    name: Backend SonarCloud Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛎️ Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Deaktiviert shallow clone für vollständige Git-Historie
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Tests with Coverage
+        working-directory: backend
+        run: |
+          pytest --cov=. --cov-report=xml --cov-report=term-missing
+          mv coverage.xml backend/coverage.xml
+
+      - name: 📥 Install SonarScanner
+        run: |
+          SONAR_SCANNER_VERSION=5.0.1.3006
+          curl -Lo sonarscanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
+          unzip sonarscanner.zip
+          sudo mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux /opt/sonar-scanner
+          echo "PATH=/opt/sonar-scanner/bin:$PATH" >> $GITHUB_ENV
+
+      - name: 🔍 SonarCloud Scan (Backend)
+        run: |
+          sonar-scanner \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.projectKey=backend-chris-diesner_fullstack-chess-app-v2 \
+            -Dsonar.organization=chris-diesner \
+            -Dsonar.python.version=3.10 \
+            -Dsonar.projectBaseDir=backend \
+            -Dsonar.sources=. \
+            -Dsonar.exclusions=**/node_modules/**,**/*.spec.js \
+            -Dsonar.coverageReportPaths=backend/coverage.xml
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
+
+  frontend_sonarcloud:
+    name: Frontend SonarCloud Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🛎️ Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Deaktiviert shallow clone für vollständige Git-Historie
+
+      - name: 📥 Install SonarScanner
+        run: |
+          SONAR_SCANNER_VERSION=5.0.1.3006
+          curl -Lo sonarscanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip
+          unzip sonarscanner.zip
+          sudo mv sonar-scanner-${SONAR_SCANNER_VERSION}-linux /opt/sonar-scanner
+          echo "PATH=/opt/sonar-scanner/bin:$PATH" >> $GITHUB_ENV
+
+      - name: 🔍 SonarCloud Scan (Frontend)
+        run: |
+          sonar-scanner \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.projectKey=frontend-chris-diesner_fullstack-chess-app-v2 \
+            -Dsonar.organization=chris-diesner \
+            -Dsonar.projectBaseDir=frontend \
+            -Dsonar.sources=. \
+            -Dsonar.language=js \
+            -Dsonar.exclusions=**/node_modules/**,**/*.spec.js
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONTEND }}
