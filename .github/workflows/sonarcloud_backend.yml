@@ -18,11 +18,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Tests with Coverage
+      - name: 🧪 Run Tests with Coverage
         working-directory: backend
         run: |
-          pytest --cov=. --cov-report=xml:coverage.xml --cov-report=cobertura:cobertura-coverage.xml --cov-report=term-missing
-
+          pytest --cov=. --cov-report=xml:coverage.xml --cov-report=term-missing
+          coverage xml -o cobertura-coverage.xml  # Konvertiere in das Cobertura-Format
+          
       - name: 📥 Install SonarScanner
         run: |
           SONAR_SCANNER_VERSION=5.0.1.3006
