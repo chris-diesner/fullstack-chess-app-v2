@@ -6,7 +6,7 @@ function ProtectedRoutes() {
 
     const authenticated = !!token;
 
-    return authenticated ? <Outlet /> : <Navigate to="/login" />;
+    return authenticated ? <Outlet /> : <Navigate to="/" />;
 }
 
 export default ProtectedRoutes;

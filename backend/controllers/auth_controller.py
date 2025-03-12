@@ -24,3 +24,10 @@ def logout(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token ungültig oder bereits abgelaufen")
 
     return {"message": "Logout erfolgreich"}
+
+@auth_router.get("/check-token")
+def check_token(token: str = Depends(oauth2_scheme)):
+    if not auth_service.is_token_valid(token):
+        raise HTTPException(status_code=401, detail="Token abgelaufen oder ungültig")
+    
+    return {"message": "Token ist gültig"}

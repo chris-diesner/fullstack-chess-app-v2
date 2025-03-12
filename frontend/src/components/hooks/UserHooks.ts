@@ -1,15 +1,58 @@
-import axios from 'axios';
-import { useState, useEffect } from 'react';
+import axios from "axios";
+import { useState, useEffect, useCallback } from "react";
 import secureLocalStorage from "react-secure-storage";
 
 export default function UserHooks() {
-    const [user, setUser] = useState<string | null>(null);
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+    const [user, setUser] = useState<string | null>(secureLocalStorage.getItem("username") as string | null);
+
+    const logout = useCallback(async () => {
+        const token = secureLocalStorage.getItem("access_token");
+    
+        if (!token) {
+            console.warn("Kein Token vorhanden, nur localStorage wird geleert.");
+        } else {
+            try {
+                await axios.post(`${BACKEND_URL}/auth/logout`, {}, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                console.log("Logout erfolgreich.");
+            } catch {
+                console.warn("Fehler beim Logout-Request:");
+            }
+        }
+    
+        secureLocalStorage.removeItem("access_token");
+        secureLocalStorage.removeItem("user_id");
+        secureLocalStorage.removeItem("username");
+        setUser(null);
+    }, []);
+    
 
     useEffect(() => {
-        const loggedInUser = secureLocalStorage.getItem("username");
-        setUser(loggedInUser ? (loggedInUser as string) : null);
-    }, []);
+        const checkTokenValidity = async () => {
+            const token = secureLocalStorage.getItem("access_token");
+            const loggedInUser = secureLocalStorage.getItem("username");
+
+            if (!token || !loggedInUser) {
+                logout();
+                return;
+            }
+
+            try {
+                await axios.get(`${BACKEND_URL}/auth/check-token`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                setUser(loggedInUser as string);
+            } catch {
+                console.warn("Token abgelaufen oder ungültig. Benutzer wird ausgeloggt.");
+                logout();
+            }
+        };
+
+        checkTokenValidity();
+    }, [logout]);
 
     function register(username: string, password: string) {
         return axios
@@ -27,12 +70,12 @@ export default function UserHooks() {
 
     function login(username: string, password: string) {
         const formData = new URLSearchParams();
-        formData.append('username', username);
-        formData.append('password', password);
+        formData.append("username", username);
+        formData.append("password", password);
 
         return axios
             .post(`${BACKEND_URL}/auth/login`, formData, {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
             })
             .then((response) => {
                 if (response.status === 200) {
@@ -45,23 +88,6 @@ export default function UserHooks() {
             .catch((error) => {
                 console.log("Login Fehler:", error);
                 throw new Error(error.response?.data?.detail || "Login fehlgeschlagen.");
-            });
-    }
-
-    function logout() {
-        const token = secureLocalStorage.getItem("access_token");
-        return axios
-            .post(`${BACKEND_URL}/auth/logout`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            .then(() => {
-                secureLocalStorage.removeItem("access_token");
-                secureLocalStorage.removeItem("user_id");
-                secureLocalStorage.removeItem("username");
-                setUser(null);
-            })
-            .catch((err) => {
-                throw new Error(err.response?.data?.detail || "Logout fehlgeschlagen.");
             });
     }
 

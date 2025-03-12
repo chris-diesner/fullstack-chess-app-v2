@@ -74,6 +74,19 @@ class AuthService:
             return False
         except jwt.InvalidTokenError:
             return False
+        
+    def is_token_valid(self, token: str) -> bool:
+        if token in token_blacklist:
+            return False
+
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            exp = payload.get("exp")
+            if not exp or datetime.fromtimestamp(exp) < datetime.now():
+                return False
+            return True
+        except (ExpiredSignatureError, jwt.InvalidTokenError):
+            return False
 
     @staticmethod
     def is_token_revoked(token: str) -> bool:
