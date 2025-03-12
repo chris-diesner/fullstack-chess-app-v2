@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch
 from fastapi.testclient import TestClient
 from app import app
-from models.user import UserCreate
+from models.user import UserCreate, UserResponse
 from services.auth_service import AuthService
 from jsonschema import validate
 from datetime import timedelta
@@ -25,7 +25,7 @@ def mock_token(mock_user):
     return AuthService.create_access_token(data={"sub": mock_user.username}, expires_delta=timedelta(minutes=30))
 
 def test_login_success_should_return_200_and_access_token(mock_auth_service, mock_user, mock_token):
-    mock_auth_service.authenticate_user.return_value = {"username": mock_user.username}
+    mock_auth_service.authenticate_user.return_value = UserResponse(user_id="mock_id", username=mock_user.username)    
     mock_auth_service.create_access_token.return_value = mock_token
 
     form_data = {"username": "testuser", "password": "testpassword"}

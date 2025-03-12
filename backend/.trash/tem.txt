@@ -89,3 +89,24 @@ def game_service(mocker):
     return service
 
 ✅ Jetzt wird insert_game() global überschrieben UND game_repo in game_service gemockt. 🚀
+
+/src
+ ├── /components
+ │    ├── Layout.tsx        ✅  (Wrapper für das Layout)
+ │    ├── Navbar.tsx        (Falls du eine zusätzliche Navbar brauchst)
+ │    ├── Sidebar.tsx       (Falls Sidebar ausgelagert werden soll)
+ │    ├── AnimatedRoutes.tsx
+ │    ├── ProtectedRoutes.tsx
+ │
+ ├── /pages
+ │    ├── HomePage.tsx      (Startseite)
+ │    ├── ChessGame.tsx     (Schachspiel)
+ │    ├── AboutPage.tsx     (Über uns)
+ │    ├── LoginPage.tsx     (Login-Seite)
+ │    ├── Register.tsx      (Registrierungs-Seite)
+ │
+ ├── /hooks
+ │    ├── UserHooks.ts      (User-Authentifizierung)
+ │
+ ├── App.tsx
+ ├── index.tsx

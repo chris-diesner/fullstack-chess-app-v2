@@ -11,9 +11,9 @@ export enum PlayerStatus {
 }
 
 export type User = {
-  id: string;
+  user_id: string;
   username: string;
-  color?: PlayerColor;  // Optional, falls der User in einer Lobby ist
+  color?: PlayerColor;  
   status?: PlayerStatus;
   capturedFigures: Figure[];
   moveHistory: string[];

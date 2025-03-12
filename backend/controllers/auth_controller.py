@@ -13,7 +13,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     if not user:
         raise HTTPException(status_code=401, detail="Username oder Passwort falsch")
     
-    access_token = auth_service.create_access_token({"sub": user["username"]})
+    access_token = auth_service.create_access_token({"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @auth_router.post("/logout")

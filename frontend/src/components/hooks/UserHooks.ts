@@ -1,16 +1,22 @@
 import axios from 'axios';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import secureLocalStorage from "react-secure-storage";
 
 export default function UserHooks() {
     const [user, setUser] = useState<string | null>(null);
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
+    useEffect(() => {
+        const loggedInUser = secureLocalStorage.getItem("username");
+        setUser(loggedInUser ? (loggedInUser as string) : null);
+    }, []);
+
     function register(username: string, password: string) {
         return axios
             .post(`${BACKEND_URL}/users/register`, { username, password })
             .then((response) => {
                 setUser(response.data.username);
+                secureLocalStorage.setItem("user_id", response.data.user_id);
                 secureLocalStorage.setItem("username", response.data.username);
                 return response.data;
             })
@@ -23,7 +29,6 @@ export default function UserHooks() {
         const formData = new URLSearchParams();
         formData.append('username', username);
         formData.append('password', password);
-        formData.append('grant_type', 'password');
 
         return axios
             .post(`${BACKEND_URL}/auth/login`, formData, {
@@ -51,6 +56,7 @@ export default function UserHooks() {
             })
             .then(() => {
                 secureLocalStorage.removeItem("access_token");
+                secureLocalStorage.removeItem("user_id");
                 secureLocalStorage.removeItem("username");
                 setUser(null);
             })
