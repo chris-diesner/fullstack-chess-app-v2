@@ -41,7 +41,7 @@ jobs:
             -Dsonar.projectBaseDir=backend \
             -Dsonar.sources=. \
             -Dsonar.exclusions=**/node_modules/**,**/*.spec.js \
-            -Dsonar.coverageReportPaths=backend/coverage.xml
+            -Dsonar.coverageReportPaths=coverage.xml
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_BACKEND }}
 
