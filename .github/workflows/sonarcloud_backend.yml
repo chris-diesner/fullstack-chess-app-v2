@@ -22,7 +22,6 @@ jobs:
         working-directory: backend
         run: |
           pytest --cov=. --cov-report=xml --cov-report=term-missing
-          mv coverage.xml backend/coverage.xml
 
       - name: 📥 Install SonarScanner
         run: |
