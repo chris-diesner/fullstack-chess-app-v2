@@ -3,7 +3,7 @@
 Thumbs.db
 .trash-*
 .trash/
-.*.txt
+tem.txt
 
 # ---- Python ----
 __pycache__/
