@@ -1,10 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from router import game_api
+from controllers.user_controller import user_router
+from controllers.auth_controller import auth_router
+from controllers.chess_lobby_controller import lobby_router
+from controllers.chess_game_controller import game_router
 from chess_exception import ChessException
 from fastapi.responses import JSONResponse
 
 app = FastAPI()
+app.include_router(user_router, prefix="/users", tags=["Users"])
+app.include_router(game_router, prefix="/game", tags=["Game"])
+app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+app.include_router(lobby_router, prefix="/lobby", tags=["Lobby"])
 
 app.add_middleware(
     CORSMiddleware,
@@ -13,8 +20,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.include_router(game_api.game_router, prefix="/game", tags=["Game"])
 
 @app.exception_handler(ChessException)
 async def chess_exception_handler(request, exc: ChessException):

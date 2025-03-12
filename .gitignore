@@ -1,6 +1,9 @@
 # ---- General ----
 .DS_Store
 Thumbs.db
+.trash-*
+.trash/
+tem.txt
 
 # ---- Python ----
 __pycache__/
@@ -49,3 +52,6 @@ frontend/.env.local
 
 # ---- Git ----
 *.orig
+
+htmlcov/
+.sonar-project.properties

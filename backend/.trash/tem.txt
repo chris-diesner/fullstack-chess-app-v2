@@ -1,0 +1,112 @@
+
+
+
+Deine neue strukturierte FastAPI-Architektur sieht jetzt so aus:
+
+📂 backend/
+ ├── 📂 controllers/
+ │   ├── auth.py        # Login & Auth (nur API-Endpoints)
+ │   ├── user.py        # User API-Endpoints
+ ├── 📂 services/
+ │   ├── auth_service.py # Token-Generierung
+ │   ├── user_service.py # User-Registrierung, Login-Checks
+ ├── 📂 repositories/
+ │   ├── user_repo.py    # User-Datenbank-Operationen
+ ├── 📂 models/
+ │   ├── user.py        # User-Schemas (Pydantic)
+ ├── 📂 database/
+ │   ├── mongodb.py     # DB-Verbindung
+ ├── 📂 tests/
+ ├── main.py            # FastAPI-App (Einstiegspunkt)
+ ├── .env               # Secrets, MongoDB-URI, JWT-Key
+ ├── requirements.txt   # Python-Abhängigkeiten
+
+
+🔍 Projektstruktur für den User-Bereich
+
+ ├── 📂 controllers/       # 🏠 FastAPI-Router (statt "Controller")
+ │   ├── user_controller.py    # API-Endpoints für User
+ │
+ ├── 📂 services/          # ⚡ Business-Logik (statt "Service")
+ │   ├── user_service.py       # Verarbeitet Logik (Registrierung, Login, etc.)
+ │
+ ├── 📂 repositories/      # 💾 Datenbankzugriff (statt "Repository")
+ │   ├── user_repo.py          # DB-Operationen für User
+ │
+ ├── 📂 models/            # 📌 Pydantic-Modelle (Schema)
+ │   ├── user.py               # UserSchema (UUID statt MongoDB ObjectId)
+ │
+ ├── 📂 database/          # 🗄️ DB-Verbindung
+ │   ├── mongodb.py            # MongoDB-Client
+ │
+ ├── main.py               # 🏠 FastAPI-App Einstiegspunkt
+
+7da9803fd3f6a3632ac2de53a8d6826a1734ec8b
+
+/chess/
+│── models/
+│   ├── chess_game.py ✅ (Speichert Spiel-Session, Game-ID, Spielerinfos)
+│   ├── figure.py ✅ (Schachfiguren & Positionen)
+│── repositories/
+│   ├── event_repository.py ✅ (Speichert Move-Events für Wiederherstellung)
+│   ├── game_repository.py ✅ (Verwaltet aktive Spiele & Spielstände)
+│── services/
+│   ├── chess_game_service.py ✅ (Verarbeitet Spielregeln & Zuglogik)
+│   ├── move_validation_service.py ✅ (Prüft Zugregeln)
+│   ├── session_manager.py ✅ (Verwaltet Spieler, Zugabfolge, Locking)
+│── controllers/
+│   ├── chess_game_controller.py ✅ (WebSocket/REST API für Multiplayer)
+│── app.py ✅ (Startet den Server)
+
+
+HILFE MOCK VARIANTEN:
+
+🎯 Wann benutzt du welchen Ansatz?
+Situation	Bester Ansatz
+Du willst alle Methoden von game_repo mocken	✅ MagicMock() für game_service.game_repo
+Du willst nur eine Methode (insert_game) überschreiben	✅ mocker.patch.object()
+Du willst keinen echten Datenbankeintrag in MongoDB	✅ Beides ist möglich
+Dein Test betrifft eine bestimmte ChessGameService-Instanz	✅ MagicMock()
+Dein Test betrifft alle ChessGameRepository-Instanzen	✅ mocker.patch.object()
+🔹 Fazit
+Mocking-Methode	Wann verwenden?	Effekt
+MagicMock() für game_repo	Wenn du eine bestimmte Instanz mocken willst	Nur game_repo wird ersetzt
+mocker.patch.object()	Wenn du eine Methode global mocken willst	Gilt für alle Instanzen von ChessGameRepository
+
+🚀 Extra: Beide Ansätze kombinieren
+
+Falls du sicherstellen willst, dass kein echter MongoDB-Zugriff passiert und trotzdem eine spezifische Instanz von ChessGameService testen willst, kannst du beide Methoden kombinieren:
+
+@pytest.fixture
+def game_service(mocker):
+    # Globale Mocking-Sicherheit für `insert_game`
+    mocker.patch.object(ChessGameRepository, "insert_game", return_value=None)
+    
+    # Lokale Instanz mit `MagicMock`
+    service = ChessGameService()
+    service.game_repo = MagicMock()
+    
+    return service
+
+✅ Jetzt wird insert_game() global überschrieben UND game_repo in game_service gemockt. 🚀
+
+/src
+ ├── /components
+ │    ├── Layout.tsx        ✅  (Wrapper für das Layout)
+ │    ├── Navbar.tsx        (Falls du eine zusätzliche Navbar brauchst)
+ │    ├── Sidebar.tsx       (Falls Sidebar ausgelagert werden soll)
+ │    ├── AnimatedRoutes.tsx
+ │    ├── ProtectedRoutes.tsx
+ │
+ ├── /pages
+ │    ├── HomePage.tsx      (Startseite)
+ │    ├── ChessGame.tsx     (Schachspiel)
+ │    ├── AboutPage.tsx     (Über uns)
+ │    ├── LoginPage.tsx     (Login-Seite)
+ │    ├── Register.tsx      (Registrierungs-Seite)
+ │
+ ├── /hooks
+ │    ├── UserHooks.ts      (User-Authentifizierung)
+ │
+ ├── App.tsx
+ ├── index.tsx

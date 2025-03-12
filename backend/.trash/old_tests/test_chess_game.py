@@ -7,7 +7,7 @@ from figures.figure import Figure, Bishop, Rook, Queen, Pawn, King, Knight
 class TestChessGame(unittest.TestCase):
     
     def setUp(self):
-        self.game = ChessGame()
+        self.game = ChessGame("white", "black")
         self.game.board.squares = [[None for _ in range(8)] for _ in range(8)]
         
     def test_white_opens_game_should_retrun_string_white(self):
@@ -336,7 +336,7 @@ class TestChessGame(unittest.TestCase):
         result = self.game.move_figure((0, 3), (0, 5), valid_uuid)
         
     def test_short_rochade_should_return_string_for_valid_rochade(self):
-        game = ChessGame()
+        game = ChessGame("white", "black")
         def mock_check_stalemate():
             return False 
         game.check_stalemate = mock_check_stalemate 
@@ -351,7 +351,7 @@ class TestChessGame(unittest.TestCase):
         self.assertIsInstance(game.board.squares[7][5], Rook)
         
     def test_long_rochade_should_return_string_for_valid_rochade(self):
-        game = ChessGame()
+        game = ChessGame("white", "black")
         def mock_check_stalemate():
             return False 
         game.check_stalemate = mock_check_stalemate
