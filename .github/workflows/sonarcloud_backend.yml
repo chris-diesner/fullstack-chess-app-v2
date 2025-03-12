@@ -21,7 +21,7 @@ jobs:
       - name: Run Tests with Coverage
         working-directory: backend
         run: |
-          pytest --cov=. --cov-report=xml --cov-report=term-missing
+          pytest --cov=. --cov-report=xml:coverage.xml --cov-report=cobertura:cobertura-coverage.xml --cov-report=term-missing
 
       - name: 📥 Install SonarScanner
         run: |
