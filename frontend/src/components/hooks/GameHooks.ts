@@ -6,7 +6,6 @@ import { Lobby } from '../../models/lobby';
 export default function GameHooks() {
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-    // 🔹 Spielzug ausführen
     function makeMove(gameId: string, userId: string, moveData: object) {
         const token = secureLocalStorage.getItem("access_token");
         return axios
@@ -19,7 +18,6 @@ export default function GameHooks() {
             });
     }
 
-    // 🔹 Neue Lobby erstellen
     function createLobby(userId: string, username: string) {
         const token = secureLocalStorage.getItem("access_token");
         return axios
@@ -40,9 +38,8 @@ export default function GameHooks() {
             console.error("Fehler in listLobbies:", error);
             throw new Error("Fehler beim Abrufen der Lobbys.");
         }
-    }, [BACKEND_URL]); // ✅ Jetzt ist listLobbies stabil!
+    }, [BACKEND_URL]);
 
-    // 🔹 Lobby beitreten
     function joinLobby(gameId: string, userId: string, username: string) {
         const token = secureLocalStorage.getItem("access_token");
         return axios
@@ -55,7 +52,6 @@ export default function GameHooks() {
             });
     }
 
-    // 🔹 Lobby verlassen
     function leaveLobby(gameId: string, userId: string) {
         const token = secureLocalStorage.getItem("access_token");
         return axios
@@ -68,7 +64,6 @@ export default function GameHooks() {
             });
     }
 
-    // 🔹 Spielerfarbe setzen
     function setPlayerColor(gameId: string, userId: string, color: "white" | "black") {
         const token = secureLocalStorage.getItem("access_token");
         return axios
@@ -81,7 +76,6 @@ export default function GameHooks() {
             });
     }
 
-    // 🔹 Spielerstatus setzen (bereit / nicht bereit)
     function setPlayerStatus(gameId: string, userId: string, status: "ready" | "not_ready") {
         const token = secureLocalStorage.getItem("access_token");
         return axios
@@ -94,7 +88,6 @@ export default function GameHooks() {
             });
     }
 
-    // 🔹 Spiel starten
     function startGame(gameId: string, userId: string) {
         const token = secureLocalStorage.getItem("access_token");
         return axios

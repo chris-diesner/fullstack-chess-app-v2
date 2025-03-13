@@ -86,19 +86,19 @@ export default function LobbyPage() {
 
     return (
         <Container className="mt-4">
-            <h2 className="mb-3">🔹 Lobby Übersicht</h2>
+            <h2 className="mb-3">Lobby Übersicht</h2>
 
             {error && <Alert variant="danger">{error}</Alert>}
             {lobbies.length === 0 && !error && (
-                <Alert variant="info">🔍 Keine offenen Lobbys gefunden.</Alert>
+                <Alert variant="info">Keine offenen Lobbys gefunden.</Alert>
             )}
 
             <div className="mb-3 d-flex gap-2">
                 <Button onClick={fetchLobbies} disabled={loading} variant="secondary">
-                    {loading ? <Spinner animation="border" size="sm" /> : "🔄 Aktualisieren"}
+                    {loading ? <Spinner animation="border" size="sm" /> : "Aktualisieren"}
                 </Button>
                 <Button onClick={handleCreateLobby} disabled={creating} variant="primary">
-                    {creating ? <Spinner animation="border" size="sm" /> : "➕ Lobby erstellen"}
+                    {creating ? <Spinner animation="border" size="sm" /> : "Lobby erstellen"}
                 </Button>
             </div>
 
@@ -124,27 +124,25 @@ export default function LobbyPage() {
                                         variant={isInLobby ? "danger" : "success"}
                                         onClick={() => handleJoinLeaveLobby(lobby.game_id, isInLobby)}
                                     >
-                                        {isInLobby ? "🚪 Verlassen" : "➕ Beitreten"}
+                                        {isInLobby ? "Verlassen" : "Beitreten"}
                                     </Button>
                                 </div>
 
-                                {/* 🔹 Spieler-Details */}
                                 <ListGroup className="mt-3">
                                     {lobby.players.map((player) => (
                                         <ListGroup.Item key={player.user_id} className="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <strong>{player.username}</strong>
                                                 <div className="small">
-                                                    🎨 Farbe: {player.color ? player.color.toUpperCase() : "Noch nicht gewählt"}  
+                                                    Farbe: {player.color ? player.color.toUpperCase() : "Noch nicht gewählt"}  
                                                     <br />
-                                                    ✅ Status: {player.status === "ready" ? "Bereit" : "Nicht bereit"}
+                                                    Status: {player.status === "ready" ? "Bereit" : "Nicht bereit"}
                                                 </div>
                                             </div>
                                         </ListGroup.Item>
                                     ))}
                                 </ListGroup>
 
-                                {/* 🎨 Spielfarbe setzen */}
                                 {isInLobby && (
                                     <Dropdown className="mt-2">
                                         <Dropdown.Toggle variant="light">Farbe wählen</Dropdown.Toggle>
@@ -155,7 +153,6 @@ export default function LobbyPage() {
                                     </Dropdown>
                                 )}
 
-                                {/* ✅ Ready-Status setzen */}
                                 {isInLobby && (
                                     <Form.Check
                                         className="mt-2"
