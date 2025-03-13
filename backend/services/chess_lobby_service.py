@@ -32,11 +32,20 @@ class ChessLobbyService:
             "lobbies": [
                 {
                     "game_id": lobby.game_id,
-                    "players": [{"user_id": user.user_id, "username": user.username} for user in lobby.players]
+                    "players": [
+                        {
+                            "user_id": user.user_id,
+                            "username": user.username,
+                            "color": user.color,
+                            "status": user.status
+                        }
+                        for user in lobby.players
+                    ]
                 }
                 for lobby in self.game_lobbies.values()
             ]
         }
+
 
     def join_lobby(self, game_id: str, user: UserLobby) -> Lobby:
         lobby = self.game_lobbies.get(game_id)

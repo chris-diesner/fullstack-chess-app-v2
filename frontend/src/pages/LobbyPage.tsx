@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
-import { Button, Container, ListGroup, Spinner, Alert } from "react-bootstrap";
+import { Button, Container, ListGroup, Spinner, Alert, Dropdown, Form } from "react-bootstrap";
 import GameHooks from "../components/hooks/GameHooks";
 import { Lobby } from "../models/lobby";
 import { useUser } from "../components/hooks/UserHooks";
 
 export default function LobbyPage() {
-    const { listLobbies, createLobby } = GameHooks();
+    const { listLobbies, createLobby, joinLobby, leaveLobby, setPlayerColor, setPlayerStatus } = GameHooks();
     const { user } = useUser();
 
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
@@ -19,7 +19,7 @@ export default function LobbyPage() {
 
         try {
             const data = await listLobbies();
-            setLobbies(data);
+            setLobbies([...data]);
         } catch {
             setError("Fehler beim Laden der Lobbys.");
         } finally {
@@ -29,7 +29,7 @@ export default function LobbyPage() {
 
     useEffect(() => {
         fetchLobbies();
-    }, [fetchLobbies]);
+    }, [fetchLobbies, user, user?.color, user?.status]);
 
     const handleCreateLobby = async () => {
         if (!user?.user_id || !user?.username) {
@@ -40,16 +40,47 @@ export default function LobbyPage() {
         setCreating(true);
         setError(null);
         try {
-            if (createLobby) {
-                await createLobby(user.user_id, user.username);
-            } else {
-                setError("Fehler: Lobby-Erstellungsfunktion nicht verfügbar.");
-            }
+            await createLobby(user.user_id, user.username);
             await fetchLobbies();
         } catch {
             setError("Fehler beim Erstellen der Lobby.");
         } finally {
             setCreating(false);
+        }
+    };
+
+    const handleJoinLeaveLobby = async (gameId: string, isInLobby: boolean) => {
+        if (!user?.user_id) return;
+
+        try {
+            if (isInLobby) {
+                await leaveLobby(gameId, user.user_id);
+            } else {
+                await joinLobby(gameId, user.user_id, user.username);
+            }
+            await fetchLobbies();
+        } catch {
+            setError(isInLobby ? "Fehler beim Verlassen der Lobby." : "Fehler beim Beitreten zur Lobby.");
+        }
+    };
+
+    const handleSetColor = async (gameId: string, color: "white" | "black") => {
+        if (!user?.user_id) return;
+        try {
+            await setPlayerColor(gameId, user.user_id, color);
+            await fetchLobbies();
+        } catch {
+            setError("Fehler beim Setzen der Spielfarbe.");
+        }
+    };
+
+    const handleSetStatus = async (gameId: string, status: "ready" | "not_ready") => {
+        if (!user?.user_id) return;
+        try {
+            await setPlayerStatus(gameId, user.user_id, status);
+            await fetchLobbies();
+        } catch {
+            setError("Fehler beim Setzen des Status.");
         }
     };
 
@@ -75,18 +106,68 @@ export default function LobbyPage() {
 
             {lobbies.length > 0 && (
                 <ListGroup>
-                    {lobbies.map((lobby) => (
-                        <ListGroup.Item
-                            key={lobby.game_id}
-                            className="d-flex justify-content-between align-items-center p-3 shadow-sm rounded"
-                            style={{ background: "#f8f9fa", borderLeft: "5px solid #007bff" }}
-                        >
-                            <div>
-                                <h5 className="mb-0">{lobby.players[0]?.username}'s Lobby</h5>
-                                <small>{lobby.players.length} Spieler in der Lobby</small>
-                            </div>
-                        </ListGroup.Item>
-                    ))}
+                    {lobbies.map((lobby) => {
+                        const isInLobby = lobby.players.some(player => player.user_id === user?.user_id);
+
+                        return (
+                            <ListGroup.Item
+                                key={lobby.game_id}
+                                className="d-flex flex-column p-3 shadow-sm rounded"
+                                style={{ background: "#f8f9fa", borderLeft: "5px solid #007bff" }}
+                            >
+                                <div className="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 className="mb-0">{lobby.players[0]?.username}'s Lobby</h5>
+                                        <small>{lobby.players.length} Spieler in der Lobby</small>
+                                    </div>
+                                    <Button
+                                        variant={isInLobby ? "danger" : "success"}
+                                        onClick={() => handleJoinLeaveLobby(lobby.game_id, isInLobby)}
+                                    >
+                                        {isInLobby ? "🚪 Verlassen" : "➕ Beitreten"}
+                                    </Button>
+                                </div>
+
+                                {/* 🔹 Spieler-Details */}
+                                <ListGroup className="mt-3">
+                                    {lobby.players.map((player) => (
+                                        <ListGroup.Item key={player.user_id} className="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>{player.username}</strong>
+                                                <div className="small">
+                                                    🎨 Farbe: {player.color ? player.color.toUpperCase() : "Noch nicht gewählt"}  
+                                                    <br />
+                                                    ✅ Status: {player.status === "ready" ? "Bereit" : "Nicht bereit"}
+                                                </div>
+                                            </div>
+                                        </ListGroup.Item>
+                                    ))}
+                                </ListGroup>
+
+                                {/* 🎨 Spielfarbe setzen */}
+                                {isInLobby && (
+                                    <Dropdown className="mt-2">
+                                        <Dropdown.Toggle variant="light">Farbe wählen</Dropdown.Toggle>
+                                        <Dropdown.Menu>
+                                            <Dropdown.Item onClick={() => handleSetColor(lobby.game_id, "white")}>Weiß</Dropdown.Item>
+                                            <Dropdown.Item onClick={() => handleSetColor(lobby.game_id, "black")}>Schwarz</Dropdown.Item>
+                                        </Dropdown.Menu>
+                                    </Dropdown>
+                                )}
+
+                                {/* ✅ Ready-Status setzen */}
+                                {isInLobby && (
+                                    <Form.Check
+                                        className="mt-2"
+                                        type="switch"
+                                        label="Bereit"
+                                        checked={user?.status === "ready"}
+                                        onChange={(e) => handleSetStatus(lobby.game_id, e.target.checked ? "ready" : "not_ready")}
+                                    />
+                                )}
+                            </ListGroup.Item>
+                        );
+                    })}
                 </ListGroup>
             )}
         </Container>
