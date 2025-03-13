@@ -15,6 +15,6 @@ export type User = {
   username: string;
   color?: PlayerColor;  
   status?: PlayerStatus;
-  capturedFigures: Figure[];
-  moveHistory: string[];
+  capturedFigures?: Figure[];
+  moveHistory?: string[];
 };

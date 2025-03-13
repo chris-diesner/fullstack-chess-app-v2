@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Outlet, Link } from "react-router-dom";
 import { Button, Container, Col, Form, Alert, Spinner } from "react-bootstrap";
-import UserHooks from "./hooks/UserHooks";
+import { useUser } from "./hooks/UserHooks";
 
 export default function Layout() {
-  const { user, login, register, logout } = UserHooks();
+  const { user, login, register, logout } = useUser();
   const [isLogin, setIsLogin] = useState(true);
   const initialFormState = { username: "", password: "", confirmPassword: "" };
   const [formData, setFormData] = useState(initialFormState);
@@ -51,10 +51,10 @@ export default function Layout() {
       <Col md={3} className="bg-light p-4 border-end">
         {user ? (
           <div className="text-center">
-            <h5>Willkommen, {user}!</h5>
+            <h5>Willkommen, {user.username}!</h5>
             <nav className="d-flex flex-column">
               <Link to="/" className="btn btn-secondary mt-2">Startseite</Link>
-              <Link to="/game" className="btn btn-secondary mt-2">Zum Spiel</Link>
+              <Link to="/lobby" className="btn btn-secondary mt-2">Zum Spiel</Link>
               <Link to="/about" className="btn btn-secondary mt-2">Über uns</Link>
             </nav>
             <Button variant="danger" onClick={logout} className="mt-3 w-100">

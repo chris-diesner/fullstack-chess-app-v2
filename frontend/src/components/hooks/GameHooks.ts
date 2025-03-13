@@ -1,5 +1,7 @@
 import axios from 'axios';
+import { useCallback } from 'react';
 import secureLocalStorage from "react-secure-storage";
+import { Lobby } from '../../models/lobby';
 
 export default function GameHooks() {
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -30,15 +32,15 @@ export default function GameHooks() {
             });
     }
 
-    // 🔹 Alle Lobbys abrufen
-    function listLobbies() {
-        return axios
-            .get(`${BACKEND_URL}/lobby/list`)
-            .then(response => response.data)
-            .catch(error => {
-                throw new Error(error.response?.data?.detail || "Fehler beim Abrufen der Lobbys.");
-            });
-    }
+    const listLobbies = useCallback(async (): Promise<Lobby[]> => {
+        try {
+            const response = await axios.get(`${BACKEND_URL}/lobby/list`);
+            return response.data.lobbies || [];
+        } catch (error) {
+            console.error("Fehler in listLobbies:", error);
+            throw new Error("Fehler beim Abrufen der Lobbys.");
+        }
+    }, [BACKEND_URL]); // ✅ Jetzt ist listLobbies stabil!
 
     // 🔹 Lobby beitreten
     function joinLobby(gameId: string, userId: string, username: string) {
@@ -105,14 +107,6 @@ export default function GameHooks() {
             });
     }
 
-    return {
-        makeMove,
-        createLobby,
-        listLobbies,
-        joinLobby,
-        leaveLobby,
-        setPlayerColor,
-        setPlayerStatus,
-        startGame
-    };
+    return { makeMove, createLobby, listLobbies, joinLobby, leaveLobby, setPlayerColor, setPlayerStatus, startGame };
+    
 }
