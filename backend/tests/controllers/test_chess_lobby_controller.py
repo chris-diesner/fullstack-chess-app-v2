@@ -44,6 +44,12 @@ def mock_chess_game_service(mocker):
     mocker.patch("services.chess_game_service.ChessGameService", return_value=mock_service)
     return mock_service
 
+def test_websocket_lobby_should_return_200():
+    with client.websocket_connect("/lobby/ws/1234") as websocket:
+        websocket.send_json({"action": "refresh"})
+        data = websocket.receive_json()
+        assert data == {"message": "refresh_lobby"}
+
 def test_create_lobby_should_return_200_and_json_response(mock_lobby_service):
     user = UserLobby(user_id="1234", username="Max", color=None, status="not_ready")
 
@@ -54,6 +60,7 @@ def test_create_lobby_should_return_200_and_json_response(mock_lobby_service):
 
     lobby_schema = {
         "type": "object",
+        
         "properties": {
             "game_id": {"type": "string"},
             "players": {

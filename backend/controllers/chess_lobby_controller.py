@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from fastapi.websockets import WebSocket, WebSocketDisconnect
 from services.chess_lobby_service import ChessLobbyService
 from models.user import UserLobby
 from models.lobby import Lobby
@@ -7,50 +8,62 @@ from models.chess_game import ChessGame
 lobby_router = APIRouter()
 lobby_service = ChessLobbyService()
 
+@lobby_router.websocket("/ws/{game_id}")
+async def websocket_lobby(websocket: WebSocket, game_id: str):
+    await websocket.accept()
+    await lobby_service.connect(websocket, game_id)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            if data.get("action") == "refresh":
+                await lobby_service.broadcast(game_id, {"message": "refresh_lobby"})
+    except WebSocketDisconnect:
+        lobby_service.disconnect(websocket, game_id)
+
 @lobby_router.post("/create", response_model=Lobby)
-def create_lobby(user: UserLobby):
+async def create_lobby(user: UserLobby):
     try:
         return lobby_service.create_lobby(user)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @lobby_router.get("/list")
-def list_lobbies():
+async def list_lobbies():
     try:
         return lobby_service.list_lobbies()
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
 @lobby_router.post("/join/{game_id}", response_model=Lobby)
-def join_lobby(game_id: str, user: UserLobby):
+async def join_lobby(game_id: str, user: UserLobby):
     try:
-        return lobby_service.join_lobby(game_id, user)
+        return await lobby_service.join_lobby(game_id, user)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @lobby_router.post("/leave/{game_id}/{user_id}", response_model=Lobby | None)
-def leave_lobby(game_id: str, user_id: str):
+async def leave_lobby(game_id: str, user_id: str):
     try:
-        return lobby_service.leave_lobby(game_id, user_id)
+        return await lobby_service.leave_lobby(game_id, user_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
 @lobby_router.post("/set_color/{game_id}/{user_id}/{color}", response_model=Lobby)
-def set_player_color(game_id: str, user_id: str, color: str):
+async def set_player_color(game_id: str, user_id: str, color: str):
     try:
-        return lobby_service.set_player_color(game_id, user_id, color)
+        return await lobby_service.set_player_color(game_id, user_id, color)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
 @lobby_router.post("/set_status/{game_id}/{user_id}/{status}", response_model=Lobby)
-def set_player_status(game_id: str, user_id: str, status: str):
+async def set_player_status(game_id: str, user_id: str, status: str):
     try:
-        return lobby_service.set_player_status(game_id, user_id, status)
+        return await lobby_service.set_player_status(game_id, user_id, status)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
 @lobby_router.post("/start_game/{game_id}/{user_id}", response_model=ChessGame)
-def start_game(game_id: str, user_id: str):
+async def start_game(game_id: str, user_id: str):
     try:
         return lobby_service.start_game(game_id, user_id)
     except ValueError as e:

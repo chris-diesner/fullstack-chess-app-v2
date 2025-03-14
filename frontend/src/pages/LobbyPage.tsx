@@ -1,14 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { Button, Container, ListGroup, Spinner, Alert, Dropdown, Form } from "react-bootstrap";
 import GameHooks from "../components/hooks/GameHooks";
-import { Lobby } from "../models/lobby";
+import { Lobby } from "../models/Lobby";
 import { useUser } from "../components/hooks/UserHooks";
 
 export default function LobbyPage() {
-    const { listLobbies, createLobby, joinLobby, leaveLobby, setPlayerColor, setPlayerStatus } = GameHooks();
-    const { user } = useUser();
-
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
+    const { listLobbies, createLobby, joinLobby, leaveLobby, setPlayerColor, setPlayerStatus } = GameHooks(setLobbies);
+    const { user } = useUser();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [creating, setCreating] = useState(false);
@@ -16,21 +15,25 @@ export default function LobbyPage() {
     const fetchLobbies = useCallback(async () => {
         setLoading(true);
         setError(null);
-
+    
         try {
-            const data = await listLobbies();
-            setLobbies([...data]);
+            const data = await listLobbies();    
+            setLobbies(data.map(lobby => ({ ...lobby })));  
+    
         } catch {
             setError("Fehler beim Laden der Lobbys.");
         } finally {
             setLoading(false);
         }
     }, [listLobbies]);
-
+    
     useEffect(() => {
         fetchLobbies();
     }, [fetchLobbies, user, user?.color, user?.status]);
 
+    useEffect(() => {
+    }, [lobbies]);
+      
     const handleCreateLobby = async () => {
         if (!user?.user_id || !user?.username) {
             setError("Fehler: Benutzer nicht gefunden.");

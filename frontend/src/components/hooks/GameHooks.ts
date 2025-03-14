@@ -1,11 +1,31 @@
 import axios from 'axios';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import secureLocalStorage from "react-secure-storage";
-import { Lobby } from '../../models/lobby';
+import { Lobby } from '../../models/Lobby';
 
-export default function GameHooks() {
+export default function GameHooks(updateLobbies: (lobbies: Lobby[]) => void) {
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+    const [socket, setSocket] = useState<WebSocket | null>(null);
 
+    const connectWebSocket = (gameId: string) => {
+        const webSocket = new WebSocket(`${BACKEND_URL.replace("http", "ws")}/lobby/ws/${gameId}`);
+
+        webSocket.onopen = () => {
+            console.log("WebSocket connected.");
+        };
+
+        webSocket.onmessage = async (event) => {
+            console.log(event.data);
+            const data = JSON.parse(event.data);
+            updateLobbies([data]); 
+        };
+
+        webSocket.onclose = () => {
+            console.log("WebSocket closed.");
+        };
+        setSocket(webSocket);
+    };
+    
     function makeMove(gameId: string, userId: string, moveData: object) {
         const token = secureLocalStorage.getItem("access_token");
         return axios
@@ -18,17 +38,27 @@ export default function GameHooks() {
             });
     }
 
-    function createLobby(userId: string, username: string) {
+    const createLobby = async (userId: string, username: string) => {
         const token = secureLocalStorage.getItem("access_token");
-        return axios
-            .post(`${BACKEND_URL}/lobby/create`, { user_id: userId, username }, {
+    
+        try {
+            const response = await axios.post(`${BACKEND_URL}/lobby/create`, { user_id: userId, username }, {
                 headers: { Authorization: `Bearer ${token}` }
-            })
-            .then(response => response.data)
-            .catch(error => {
-                throw new Error(error.response?.data?.detail || "Fehler beim Erstellen der Lobby.");
             });
-    }
+    
+            const gameId = response.data.game_id;
+            await listLobbies();
+            connectWebSocket(gameId);
+            console.log("Aktiver WebSocket nach createLobby:", socket);
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                throw new Error(error.response.data?.detail || "Fehler beim Erstellen der Lobby.");
+            } else {
+                throw new Error("Fehler beim Erstellen der Lobby.");
+            }
+        }
+    };
+    
 
     const listLobbies = useCallback(async (): Promise<Lobby[]> => {
         try {
@@ -40,29 +70,21 @@ export default function GameHooks() {
         }
     }, [BACKEND_URL]);
 
-    function joinLobby(gameId: string, userId: string, username: string) {
+    const joinLobby = async (gameId: string, userId: string, username: string) => {
         const token = secureLocalStorage.getItem("access_token");
-        return axios
+        await axios
             .post(`${BACKEND_URL}/lobby/join/${gameId}`, { user_id: userId, username }, {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            .then(response => response.data)
-            .catch(error => {
-                throw new Error(error.response?.data?.detail || "Fehler beim Beitreten zur Lobby.");
-            });
+            await listLobbies();
+            connectWebSocket(gameId);
     }
 
-    function leaveLobby(gameId: string, userId: string) {
-        const token = secureLocalStorage.getItem("access_token");
-        return axios
-            .post(`${BACKEND_URL}/lobby/leave/${gameId}/${userId}`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            .then(response => response.data)
-            .catch(error => {
-                throw new Error(error.response?.data?.detail || "Fehler beim Verlassen der Lobby.");
-            });
-    }
+    const leaveLobby = async (gameId: string, userId: string) => {
+        await axios.post(`${BACKEND_URL}/lobby/leave/${gameId}/${userId}`);
+        await listLobbies();
+        socket?.close();
+    };
 
     function setPlayerColor(gameId: string, userId: string, color: "white" | "black") {
         const token = secureLocalStorage.getItem("access_token");
@@ -99,6 +121,10 @@ export default function GameHooks() {
                 throw new Error(error.response?.data?.detail || "Fehler beim Starten des Spiels.");
             });
     }
+
+    useEffect(() => {
+        listLobbies();
+    }, [listLobbies]);
 
     return { makeMove, createLobby, listLobbies, joinLobby, leaveLobby, setPlayerColor, setPlayerStatus, startGame };
     
