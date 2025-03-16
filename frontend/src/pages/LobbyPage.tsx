@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button, Container, ListGroup, Spinner, Alert, Dropdown, Form } from "react-bootstrap";
 import GameHooks from "../components/hooks/GameHooks";
 import { Lobby } from "../models/Lobby";
@@ -6,11 +7,12 @@ import { useUser } from "../components/hooks/UserHooks";
 
 export default function LobbyPage() {
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
-    const { listLobbies, createLobby, joinLobby, leaveLobby, setPlayerColor, setPlayerStatus } = GameHooks(setLobbies);
+    const { listLobbies, createLobby, joinLobby, leaveLobby, setPlayerColor, setPlayerStatus, startGame } = GameHooks(setLobbies, () => {});
     const { user } = useUser();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [creating, setCreating] = useState(false);
+    const navigate = useNavigate();
 
     const fetchLobbies = useCallback(async () => {
         setLoading(true);
@@ -27,10 +29,6 @@ export default function LobbyPage() {
         }
     }, [listLobbies]);
     
-    useEffect(() => {
-        fetchLobbies();
-    }, [fetchLobbies, user, user?.color, user?.status]);
-
     useEffect(() => {
     }, [lobbies]);
       
@@ -85,6 +83,21 @@ export default function LobbyPage() {
         } catch {
             setError("Fehler beim Setzen des Status.");
         }
+    };
+
+    const handleStartGame = async (gameId: string) => {
+        if (!user?.user_id) return;
+        try {
+            await startGame(gameId, user.user_id);
+            navigate(`/game/${gameId}`);
+        } catch {
+            setError("Fehler beim Starten des Spiels.");
+        }
+    };
+    
+    const isLobbyReady = (lobby: Lobby) => {
+        if (lobby.players.length !== 2) return false;
+        return lobby.players.every(p => p.color && p.status === "ready");
     };
 
     return (
@@ -165,6 +178,13 @@ export default function LobbyPage() {
                                         onChange={(e) => handleSetStatus(lobby.game_id, e.target.checked ? "ready" : "not_ready")}
                                     />
                                 )}
+
+                                {isLobbyReady(lobby) && isInLobby && (
+                                    <Button variant="success" className="mt-2" onClick={() => handleStartGame(lobby.game_id)}>
+                                        Spiel starten...
+                                    </Button>
+                                )}
+
                             </ListGroup.Item>
                         );
                     })}

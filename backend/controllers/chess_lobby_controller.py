@@ -3,7 +3,6 @@ from fastapi.websockets import WebSocket, WebSocketDisconnect
 from services.chess_lobby_service import ChessLobbyService
 from models.user import UserLobby
 from models.lobby import Lobby
-from models.chess_game import ChessGame
 
 lobby_router = APIRouter()
 lobby_service = ChessLobbyService()
@@ -59,12 +58,5 @@ async def set_player_color(game_id: str, user_id: str, color: str):
 async def set_player_status(game_id: str, user_id: str, status: str):
     try:
         return await lobby_service.set_player_status(game_id, user_id, status)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    
-@lobby_router.post("/start_game/{game_id}/{user_id}", response_model=ChessGame)
-async def start_game(game_id: str, user_id: str):
-    try:
-        return lobby_service.start_game(game_id, user_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

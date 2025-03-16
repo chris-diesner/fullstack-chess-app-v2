@@ -1,46 +1,106 @@
 from models.chess_game import ChessGame, GameStatus
-from models.user import UserInGame, UserLobby, PlayerColor
+from models.user import UserInGame, UserLobby, PlayerColor, PlayerStatus
 from repositories.chess_game_repo import ChessGameRepository
 from services.chess_board_service import ChessBoardService
 from models.figure import King, Queen, Bishop, Knight, Rook, Pawn, FigureColor
 from services.move_validation_service import MoveValidationService
+from services.chess_lobby_service import ChessLobbyService
+from typing import Dict, List
+from fastapi.websockets import WebSocket
 from datetime import datetime
 import copy
+
+class ChessGameException(Exception):
+    """Benutzerdefinierte Exception für Schachspiel-Fehler."""
+    pass
+
+LOBBY_NOT_FOUND_ERROR = "Lobby nicht gefunden."
 
 class ChessGameService:
     def __init__(self):
         self.game_repo = ChessGameRepository()
+        self.active_connections: Dict[str, List[WebSocket]] = {}
+        self.lobby_service = ChessLobbyService()
+        self.game_lobbies = self.lobby_service.game_lobbies
         
-    def initialize_game(self, game_id: str, player_white: UserLobby, player_black: UserLobby) -> ChessGame | None:
+    async def connect(self, websocket: WebSocket, game_id: str):
+        if game_id not in self.active_connections:
+            self.active_connections[game_id] = []
+        self.active_connections[game_id].append(websocket)
+
+    def disconnect(self, websocket: WebSocket, game_id: str):
+        if game_id in self.active_connections:
+            self.active_connections[game_id].remove(websocket)
+            if not self.active_connections[game_id]:
+                del self.active_connections[game_id]
+
+    async def broadcast(self, game_id: str, message: dict):
+        if game_id in self.active_connections:
+            for ws in self.active_connections[game_id]:
+                await ws.send_json(message)
+                
+    async def start_game(self, game_id: str, user_id: str) -> ChessGame:
+        lobby = self.game_lobbies.get(game_id)
+        if not lobby:
+            raise ChessGameException("Lobby nicht gefunden.")
+
+        if len(lobby.players) < 2:
+            raise ChessGameException("Spiel braucht zwei Spieler.")
+
+        if user_id != lobby.players[0].user_id:
+            raise ChessGameException("Nur der Host kann das Spiel starten.")
+
+        player_white = next((player for player in lobby.players if player.color == PlayerColor.WHITE), None)
+        player_black = next((player for player in lobby.players if player.color == PlayerColor.BLACK), None)
+
+        if not player_white or not player_black:
+            raise ChessGameException("Beide Spieler müssen eine Farbe wählen.")
+
+        if any(player.status != PlayerStatus.READY for player in lobby.players):
+            raise ChessGameException("Beide Spieler müssen bereit sein.")
+
         chess_board_service = ChessBoardService()
         chess_board_service.initialize_board()
         chess_board = chess_board_service.board
 
         game = ChessGame(
             game_id=game_id,
-            time_stamp_start= datetime.now(),
-            player_white=UserInGame(user_id=player_white.user_id, username=player_white.username, color=PlayerColor.WHITE),
-            player_black=UserInGame(user_id=player_black.user_id, username=player_black.username, color=PlayerColor.BLACK),
-            current_turn=PlayerColor.WHITE.value,
+            time_stamp_start=datetime.now(),
+            player_white=UserInGame(
+                user_id=player_white.user_id, 
+                username=player_white.username, 
+                color=player_white.color
+            ),
+            player_black=UserInGame(
+                user_id=player_black.user_id, 
+                username=player_black.username, 
+                color=player_black.color
+            ),
+            current_turn=PlayerColor.WHITE,
             board=chess_board,
             status=GameStatus.RUNNING
         )
-        
-        self.game_repo.insert_game(game)
-        
-        return game
-    
-    def get_game_state(self, game_id: str) -> ChessGame | None:
-        game = self.game_repo.find_game_by_id(game_id)
-        if not game:
-            raise ValueError("Spiel nicht gefunden.")
+
+        if isinstance(game, dict):
+            game = ChessGame(**game)
+
+        self.game_repo.insert_game(game.model_dump())
+
+        await self.broadcast(game_id, {"type": "game_started", "game": game.model_dump()})
         return game
 
-    def move_figure(self, start_pos: tuple[int, int], end_pos: tuple[int, int], game_id: str, user_id: str) -> ChessGame | None:
+    def get_game_state(self, game_id: str) -> ChessGame | None:
+        game_data = self.game_repo.find_game_by_id(game_id)
+        if not game_data:
+            raise ValueError("Spiel nicht gefunden.")
+        
+        return ChessGame(**game_data)
+
+    async def move_figure(self, start_pos: tuple[int, int], end_pos: tuple[int, int], game_id: str, user_id: str) -> ChessGame | None:
         game = self.get_game_state(game_id)
         
-        if (game.current_turn == PlayerColor.WHITE.value and user_id != game.player_white.user_id) or \
-            (game.current_turn == PlayerColor.BLACK.value and user_id != game.player_black.user_id):
+        if (game.current_turn == PlayerColor.WHITE and user_id != game.player_white.user_id) or \
+            (game.current_turn == PlayerColor.BLACK and user_id != game.player_black.user_id):
                 raise ValueError("Nicht dein Zug!")
 
         if game.status != GameStatus.RUNNING:
@@ -71,7 +131,7 @@ class ChessGameService:
         game.board.squares[start_pos[0]][start_pos[1]] = None
         figure.position = end_pos
         
-        active_player = game.player_white if game.current_turn == PlayerColor.WHITE.value else game.player_black
+        active_player = game.player_white if game.current_turn == PlayerColor.WHITE else game.player_black
         notation = f"{figure.position}{start_pos[1]}{start_pos[0]}{end_pos[1]}{end_pos[0]}"
         active_player.move_history.append(notation)
         
@@ -86,10 +146,12 @@ class ChessGameService:
             figure.has_moved = True
             
         if isinstance(figure, Pawn) and (end_pos[0] == 0 or end_pos[0] == 7):
-            self.promote_pawn(game_id, end_pos, "queen")
+            await self.promote_pawn(game_id, end_pos, "queen")
 
-        game.current_turn = PlayerColor.BLACK.value if game.current_turn == PlayerColor.WHITE.value else PlayerColor.WHITE.value
+        game.current_turn = PlayerColor.BLACK if game.current_turn == PlayerColor.WHITE else PlayerColor.WHITE
                 
+        await self.broadcast(game_id, {"type": "game_state", "data": game.model_dump()})
+        
         king_in_check, _ = MoveValidationService.is_king_in_check(game, game.board)
         
         if MoveValidationService.is_stalemate(game, game.board):
@@ -100,10 +162,10 @@ class ChessGameService:
         if MoveValidationService.is_king_checkmate(game, game.board):
             game.status = GameStatus.ENDED
             self.game_repo.insert_game(game)
-            winner = PlayerColor.WHITE.value if game.current_turn == PlayerColor.BLACK.value else PlayerColor.BLACK.value
+            winner = PlayerColor.WHITE if game.current_turn == PlayerColor.BLACK else PlayerColor.BLACK
             loser = game.current_turn
             
-            self.send_notification(game, f"Schachmatt! {winner} hat gewonnen! {loser} hat verloren!")
+            await self.send_notification(game, f"Schachmatt! {winner} hat gewonnen! {loser} hat verloren!")
         
             raise ValueError(f"Schachmatt! {winner} hat gewonnen! {loser} hat verloren!")
         
@@ -114,15 +176,10 @@ class ChessGameService:
         
         return game
     
-    # message handler - WIP - soll noch ausgelagert werden!
-    def send_notification(self, game: ChessGame, message: str):
-        player_white = game.player_white.username
-        player_black = game.player_black.username
+    async def send_notification(self, game_id: str, message: str):
+        await self.broadcast(game_id, {"type": "notification", "message": message})
 
-        print(f"🔔 Nachricht an {player_white}: {message}")
-        print(f"🔔 Nachricht an {player_black}: {message}")
-
-    def promote_pawn(self, game_id: str, position: tuple[int, int], promotion_choice: str) -> ChessGame:
+    async def promote_pawn(self, game_id: str, position: tuple[int, int], promotion_choice: str) -> ChessGame:
         game = self.get_game_state(game_id)
 
         row, col = position

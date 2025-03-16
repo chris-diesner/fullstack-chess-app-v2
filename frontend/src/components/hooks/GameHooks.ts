@@ -2,12 +2,18 @@ import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 import secureLocalStorage from "react-secure-storage";
 import { Lobby } from '../../models/Lobby';
+import { ChessGame } from '../../models/ChessGame';
+import { MoveData } from '../../models/ChessGame';
 
-export default function GameHooks(updateLobbies: (lobbies: Lobby[]) => void) {
+export default function GameHooks(
+    updateLobbies: (lobbies: Lobby[]) => void,
+    updateGameState: (gameState: ChessGame | null) => void
+) {
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-    const [socket, setSocket] = useState<WebSocket | null>(null);
+    const [lobbySocket, setLobbySocket] = useState<WebSocket | null>(null);
+    const [gameSocket, setGameSocket] = useState<WebSocket | null>(null);
 
-    const connectWebSocket = (gameId: string) => {
+    const connectLobbyWebSocket = (gameId: string) => {
         const webSocket = new WebSocket(`${BACKEND_URL.replace("http", "ws")}/lobby/ws/${gameId}`);
 
         webSocket.onopen = () => {
@@ -23,20 +29,41 @@ export default function GameHooks(updateLobbies: (lobbies: Lobby[]) => void) {
         webSocket.onclose = () => {
             console.log("WebSocket closed.");
         };
-        setSocket(webSocket);
+        setLobbySocket(webSocket);
+    };
+
+    const connectGameWebSocket = (gameId: string) => {
+        const webSocket = new WebSocket(`${BACKEND_URL.replace("http", "ws")}/game/ws/${gameId}`);
+
+        webSocket.onopen = () => console.log("Game WebSocket connected.");
+        webSocket.onmessage = (event) => {
+            console.log("Game Update:", event.data);
+            const data = JSON.parse(event.data);
+            if (data.type === "game_state") {
+                updateGameState(data.data);
+            } else if (data.type === "error") {
+                alert(`Fehler: ${data.message}`);
+            }
+        };
+        webSocket.onclose = () => console.log("Game WebSocket closed.");
+
+        setGameSocket(webSocket);
     };
     
-    function makeMove(gameId: string, userId: string, moveData: object) {
-        const token = secureLocalStorage.getItem("access_token");
-        return axios
-            .post(`${BACKEND_URL}/game/move/${gameId}/${userId}`, moveData, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            .then(response => response.data)
-            .catch(error => {
-                throw new Error(error.response?.data?.detail || "Fehler beim Senden des Spielzugs.");
-            });
-    }
+    const makeMove = (gameId: string, userId: string, moveData: MoveData) => {
+        if (gameSocket && gameSocket.readyState === WebSocket.OPEN) {
+            const message = {
+                action: "move",
+                game_id: gameId,
+                user_id: userId,
+                start_pos: moveData.start,
+                end_pos: moveData.end,
+            };
+            gameSocket.send(JSON.stringify(message));
+        } else {
+            console.error("WebSocket nicht verbunden!");
+        }
+    };    
 
     const createLobby = async (userId: string, username: string) => {
         const token = secureLocalStorage.getItem("access_token");
@@ -48,8 +75,8 @@ export default function GameHooks(updateLobbies: (lobbies: Lobby[]) => void) {
     
             const gameId = response.data.game_id;
             await listLobbies();
-            connectWebSocket(gameId);
-            console.log("Aktiver WebSocket nach createLobby:", socket);
+            connectLobbyWebSocket(gameId);
+            console.log("Aktiver WebSocket nach createLobby:", lobbySocket);
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
                 throw new Error(error.response.data?.detail || "Fehler beim Erstellen der Lobby.");
@@ -59,7 +86,6 @@ export default function GameHooks(updateLobbies: (lobbies: Lobby[]) => void) {
         }
     };
     
-
     const listLobbies = useCallback(async (): Promise<Lobby[]> => {
         try {
             const response = await axios.get(`${BACKEND_URL}/lobby/list`);
@@ -77,13 +103,13 @@ export default function GameHooks(updateLobbies: (lobbies: Lobby[]) => void) {
                 headers: { Authorization: `Bearer ${token}` }
             })
             await listLobbies();
-            connectWebSocket(gameId);
+            connectLobbyWebSocket(gameId);
     }
 
     const leaveLobby = async (gameId: string, userId: string) => {
         await axios.post(`${BACKEND_URL}/lobby/leave/${gameId}/${userId}`);
         await listLobbies();
-        socket?.close();
+        lobbySocket?.close();
     };
 
     function setPlayerColor(gameId: string, userId: string, color: "white" | "black") {
@@ -110,21 +136,25 @@ export default function GameHooks(updateLobbies: (lobbies: Lobby[]) => void) {
             });
     }
 
-    function startGame(gameId: string, userId: string) {
+    const startGame = async (gameId: string, userId: string) => {
         const token = secureLocalStorage.getItem("access_token");
-        return axios
-            .post(`${BACKEND_URL}/lobby/start_game/${gameId}/${userId}`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-            .then(response => response.data)
-            .catch(error => {
-                throw new Error(error.response?.data?.detail || "Fehler beim Starten des Spiels.");
-            });
-    }
+        const response = await fetch(`${BACKEND_URL}/game/start_game/${gameId}/${userId}`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = await response.json();
+        if (data) {
+            connectGameWebSocket(gameId);
+        }
+    };
 
     useEffect(() => {
-        listLobbies();
-    }, [listLobbies]);
+        return () => {
+            lobbySocket?.close();
+            gameSocket?.close();
+        };
+    }, []);
 
     return { makeMove, createLobby, listLobbies, joinLobby, leaveLobby, setPlayerColor, setPlayerStatus, startGame };
     

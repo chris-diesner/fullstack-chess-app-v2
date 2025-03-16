@@ -1,9 +1,7 @@
 import uuid
 from fastapi.websockets import WebSocket
 from models.lobby import Lobby
-from models.user import UserLobby, PlayerColor, PlayerStatus
-from models.chess_game import ChessGame
-from services.chess_game_service import ChessGameService
+from models.user import UserLobby
 from typing import Dict, List
 
 LOBBY_NOT_FOND_ERROR = "Lobby nicht gefunden."
@@ -11,8 +9,12 @@ LOBBY_NOT_FOND_ERROR = "Lobby nicht gefunden."
 class ChessLobbyService:
     
     def __init__(self):
-        self.game_lobbies: Dict[str, Lobby] = {}
+        if not hasattr(ChessLobbyService, "game_lobbies"):
+            ChessLobbyService.game_lobbies = {}
         self.active_connections: Dict[str, List[WebSocket]] = {}
+        
+    def get_lobbies(self):
+        return ChessLobbyService.game_lobbies
         
     async def connect(self, websocket: WebSocket, game_id: str):
         if game_id not in self.active_connections:
@@ -151,28 +153,3 @@ class ChessLobbyService:
         await self.notify_lobby_update(game_id)
         
         return lobby
-    
-    def start_game(self, game_id, user_id) -> ChessGame:
-        lobby = self.game_lobbies.get(game_id)
-        if not lobby:
-            raise ValueError(LOBBY_NOT_FOND_ERROR)
-        
-        if len(lobby.players) < 2:
-            raise ValueError("Spiel braucht zwei Spieler.")
-        
-        if user_id != lobby.players[0].user_id:
-            raise ValueError("Nur der Host kann das Spiel starten.")
-        
-        player_white = next((player for player in lobby.players if player.color == PlayerColor.WHITE), None)
-        player_black = next((player for player in lobby.players if player.color == PlayerColor.BLACK), None)
-        
-        if not player_white or not player_black:
-            raise ValueError("Beide Spieler müssen eine Farbe wählen.")
-        
-        if any(player.status != PlayerStatus.READY for player in lobby.players):
-            raise ValueError("Beide Spieler müssen bereit sein.")
-        
-        game_service = ChessGameService()
-        game = game_service.initialize_game(game_id, player_white, player_black)
-        
-        return game

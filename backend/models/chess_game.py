@@ -5,7 +5,7 @@ from models.user import UserInGame
 from datetime import datetime
 from typing import Optional
 
-class GameStatus(Enum):
+class GameStatus(str, Enum):
     RUNNING = "running"
     ENDED = "ended"
     ABORTED = "aborted"

@@ -87,8 +87,9 @@ def test_get_game_state_fail_should_raise_error(game_service):
         game_service.get_game_state(game_id)
         
     assert str(e.value) == "Spiel nicht gefunden."
-    
-def test_move_figure_should_raise_error_for_empty_square():
+
+@pytest.mark.asyncio    
+async def test_move_figure_should_raise_error_for_empty_square():
     game_service = ChessGameService()
     game_service.game_repo = MagicMock()
     
@@ -107,11 +108,12 @@ def test_move_figure_should_raise_error_for_empty_square():
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
+        await game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
         
     assert str(e.value) == "Du hast ein leeres Feld ausgewählt!"
     
-def test_move_figure_should_raise_error_for_game_already_ended():
+@pytest.mark.asyncio
+async def test_move_figure_should_raise_error_for_game_already_ended():
     game_service = ChessGameService()
     game_service.game_repo = MagicMock()
     
@@ -130,11 +132,12 @@ def test_move_figure_should_raise_error_for_game_already_ended():
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
+        await game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
         
     assert str(e.value) == "Spiel ist bereits beendet."
     
-def test_move_figure_should_raise_error_for_wrong_turn():
+@pytest.mark.asyncio
+async def test_move_figure_should_raise_error_for_wrong_turn():
     game_service = ChessGameService()
     game_service.game_repo = MagicMock()
     
@@ -153,11 +156,12 @@ def test_move_figure_should_raise_error_for_wrong_turn():
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
+        await game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
         
     assert str(e.value) == "Es ist black's Zug!"
 
-def test_move_figure_should_raise_error_for_non_legal_move():
+@pytest.mark.asyncio
+async def test_move_figure_should_raise_error_for_non_legal_move():
     game_service = ChessGameService()
     game_service.game_repo = MagicMock()
     
@@ -176,11 +180,12 @@ def test_move_figure_should_raise_error_for_non_legal_move():
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
+        await game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
         
     assert str(e.value) == "Ungültiger Zug!"
     
-def test_move_figure_should_raise_message_leave_king_in_check(empty_board):
+@pytest.mark.asyncio
+async def test_move_figure_should_raise_message_leave_king_in_check(empty_board):
     game_service = ChessGameService()
     game_service.game_repo = MagicMock()
     
@@ -209,11 +214,12 @@ def test_move_figure_should_raise_message_leave_king_in_check(empty_board):
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
+        await game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
         
     assert str(e.value) == "Zug nicht möglich! Dein König steht im Schach!"
     
-def test_move_figure_should_raise_message_for_unblock_check(empty_board):
+@pytest.mark.asyncio
+async def test_move_figure_should_raise_message_for_unblock_check(empty_board):
     game_service = ChessGameService()
     game_service.game_repo = MagicMock()
     
@@ -242,11 +248,12 @@ def test_move_figure_should_raise_message_for_unblock_check(empty_board):
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
+        await game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
         
     assert str(e.value) == "Zug nicht möglich! Dein König stünde im Schach!"
     
-def test_move_figure_should_raise_message_for_moving_king_in_check(empty_board):
+@pytest.mark.asyncio
+async def test_move_figure_should_raise_message_for_moving_king_in_check(empty_board):
     game_service = ChessGameService()
     game_service.game_repo = MagicMock()
     
@@ -275,11 +282,12 @@ def test_move_figure_should_raise_message_for_moving_king_in_check(empty_board):
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
+        await game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
         
     assert str(e.value) == "Zug nicht möglich! Dein König stünde im Schach!"
     
-def test_move_figure_should_raise_message_for_check_for_next_current_player(empty_board):
+@pytest.mark.asyncio
+async def test_move_figure_should_raise_message_for_check_for_next_current_player(empty_board):
     game_service = ChessGameService()
     game_service.game_repo = MagicMock()
     
@@ -317,7 +325,7 @@ def test_move_figure_should_raise_message_for_check_for_next_current_player(empt
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
+        await game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
 
     game_service.game_repo.insert_game.assert_called_once()
     
@@ -325,7 +333,8 @@ def test_move_figure_should_raise_message_for_check_for_next_current_player(empt
     assert inserted_game.board.squares == expected_board.squares
     assert str(e.value) == "Schach! white ist im Schach!"
     
-def test_move_figure_should_raise_message_for_stalemate_number_one(empty_board):
+@pytest.mark.asyncio
+async def test_move_figure_should_raise_message_for_stalemate_number_one(empty_board):
     game_service = ChessGameService()
     game_service.game_repo = MagicMock()
     
@@ -364,7 +373,7 @@ def test_move_figure_should_raise_message_for_stalemate_number_one(empty_board):
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
+        await game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
 
     game_service.game_repo.insert_game.assert_called_once()
     
@@ -375,7 +384,8 @@ def test_move_figure_should_raise_message_for_stalemate_number_one(empty_board):
     
     assert str(e.value) == "Patt! Spiel endet unentschieden!"
 
-def test_move_figure_should_raise_message_for_stalemate_number_two(empty_board):
+@pytest.mark.asyncio
+async def test_move_figure_should_raise_message_for_stalemate_number_two(empty_board):
     game_service = ChessGameService()
     game_service.game_repo = MagicMock()
     
@@ -410,7 +420,7 @@ def test_move_figure_should_raise_message_for_stalemate_number_two(empty_board):
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
+        await game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
 
     game_service.game_repo.insert_game.assert_called_once()
     
@@ -421,7 +431,8 @@ def test_move_figure_should_raise_message_for_stalemate_number_two(empty_board):
     
     assert str(e.value) == "Patt! Spiel endet unentschieden!"
     
-def test_move_figure_should_raise_message_for_checkmate(empty_board):
+@pytest.mark.asyncio
+async def test_move_figure_should_raise_message_for_checkmate(empty_board):
     game_service = ChessGameService()
     game_service.game_repo = MagicMock()
     
@@ -460,7 +471,7 @@ def test_move_figure_should_raise_message_for_checkmate(empty_board):
     )
     
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
+        await game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
 
     game_service.game_repo.insert_game.assert_called_once()
     
@@ -509,7 +520,8 @@ def test_pawn_promotion_to_queen(game_service, empty_board):
 
     game_service.game_repo.insert_game.assert_called_once_with(updated_game)
 
-def test_move_figure_should_update_move_history(game_service):
+@pytest.mark.asyncio
+async def test_move_figure_should_update_move_history(game_service):
     game_id = str(uuid.uuid4())
     start_pos = (6, 0)
     end_pos = (4, 0)
@@ -560,7 +572,7 @@ def test_move_figure_should_update_move_history(game_service):
         status=GameStatus.RUNNING
     )
 
-    game = game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
+    game = await game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
 
     assert game.game_id == game_id
     assert game.current_turn == "black"
@@ -572,7 +584,8 @@ def test_move_figure_should_update_move_history(game_service):
     assert game.player_white.move_history == [expected_notation]
     assert game.player_black.move_history == []
 
-def test_move_figure_should_raise_message_for_check_for_next_current_player_and_captured_figures(empty_board):
+@pytest.mark.asyncio
+async def test_move_figure_should_raise_message_for_check_for_next_current_player_and_captured_figures(empty_board):
     game_service = ChessGameService()
     game_service.game_repo = MagicMock()
     
@@ -624,7 +637,7 @@ def test_move_figure_should_raise_message_for_check_for_next_current_player_and_
     )
 
     with pytest.raises(ValueError) as e:
-        game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
+        await game_service.move_figure(start_pos, end_pos, game_id, user_lobby_b.user_id)
 
     game_service.game_repo.insert_game.assert_called_once()
 

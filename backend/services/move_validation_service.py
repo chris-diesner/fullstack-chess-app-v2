@@ -29,8 +29,8 @@ class MoveValidationService:
         if isinstance(figure, King):
             if abs(start_pos[1] - end_pos[1]) == 2:
                 if not MoveValidationService.is_valid_castling(figure, start_pos, end_pos, board, game):
-                    return False  # Rochade ist nicht erlaubt
-                return True  # Rochade ist erlaubt
+                    return False
+                return True
             return MoveValidationService.is_valid_move_king(figure, start_pos, end_pos, board)
 
         return False
@@ -131,7 +131,7 @@ class MoveValidationService:
         for row in range(8):
             for col in range(8):
                 figure = board.squares[row][col]
-                if isinstance(figure, King) and figure.color.value == game.current_turn:
+                if isinstance(figure, King) and figure.color == game.current_turn:
                     king = figure
                     king_position = (row, col)
                     break
@@ -146,7 +146,7 @@ class MoveValidationService:
         for row in range(8):
             for col in range(8):
                 attacker = board.squares[row][col]
-                if attacker and attacker.color.value != game.current_turn:
+                if attacker and attacker.color != game.current_turn:
                     if MoveValidationService.is_move_valid(attacker, (row, col), king_position, board, game):
                         attacking_figures.append((attacker, (row, col)))
 
@@ -163,7 +163,7 @@ class MoveValidationService:
         for row in range(8):
             for col in range(8):
                 figure = board.squares[row][col]
-                if isinstance(figure, King) and figure.color.value == game.current_turn:
+                if isinstance(figure, King) and figure.color == game.current_turn:
                     king_pos = (row, col)
                     break
             if king_pos:
@@ -188,7 +188,7 @@ class MoveValidationService:
         for row in range(8):
             for col in range(8):
                 figure = board.squares[row][col]
-                if figure and figure.color.value == game.current_turn:
+                if figure and figure.color == game.current_turn:
                     start_pos = (row, col)
 
                     if MoveValidationService.is_move_valid(figure, start_pos, attacker_pos, board, game):
@@ -242,7 +242,7 @@ class MoveValidationService:
         for row in range(8):
             for col in range(8):
                 figure = board.squares[row][col]
-                if figure and figure.color.value == game.current_turn:
+                if figure and figure.color == game.current_turn:
                     start_pos = (row, col)
                     for end_row in range(8):
                         for end_col in range(8):

@@ -1,6 +1,6 @@
 import pytest
 import uuid
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
 from app import app
 from services.chess_game_service import ChessGameService
@@ -33,6 +33,7 @@ def initialized_game():
             "username": "Anna",
             "color": "black",
             "captured_figures": [],
+            
             "move_history": []
         },
         "current_turn": "white",
@@ -62,8 +63,12 @@ def test_move_figure_should_return_200_and_update_game_blablub(mocker, mock_db, 
 
     mock_db.find_game_by_id.return_value = initialized_game
 
-    mocker.patch.object(ChessGameService, "move_figure", return_value=initialized_game)
-
+    mocker.patch.object(
+            ChessGameService,
+            "move_figure",
+            new=lambda self, start, end, game_id, user_id: initialized_game
+        )
+    
     move_white = {"start_pos": [6, 0], "end_pos": [5, 0]}
     response = client.post(f"/game/move/{game_id}/{user_white_id}", json=move_white)
     assert response.status_code == 200

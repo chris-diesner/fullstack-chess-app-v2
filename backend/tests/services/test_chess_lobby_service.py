@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 from services.chess_lobby_service import ChessLobbyService
 from repositories.chess_game_repo import ChessGameRepository
 from models.lobby import Lobby, UserLobby

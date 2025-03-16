@@ -2,59 +2,49 @@ export class Figure {
     type: string;
     color: "white" | "black";
     position: string;
+    image_path: string;
   
-    constructor(type: string, color: "white" | "black", position: string) {
+    constructor(type: string, color: "white" | "black", position: string, image_path: string) {
       this.type = type;
       this.color = color;
       this.position = position;
-    }
-  
-    getUnicode(): string {
-      const unicodeFigures: Record<string, string> = {
-        king: this.color === "white" ? "♔" : "♚",
-        queen: this.color === "white" ? "♕" : "♛",
-        rook: this.color === "white" ? "♖" : "♜",
-        bishop: this.color === "white" ? "♗" : "♝",
-        knight: this.color === "white" ? "♘" : "♞",
-        pawn: this.color === "white" ? "♙" : "♟",
-      };
-      return unicodeFigures[this.type] || "?";
+      this.image_path = image_path;
     }
   }
   
   export class King extends Figure {
-    constructor(color: "white" | "black", position: string) {
-      super("king", color, position);
+    constructor(color: "white" | "black", position: string, image_path: string) {
+      super("king", color, position, image_path);
     }
   }
   
   export class Queen extends Figure {
-    constructor(color: "white" | "black", position: string) {
-      super("queen", color, position);
+    constructor(color: "white" | "black", position: string, image_path: string) {
+      super("queen", color, position, image_path);
     }
   }
   
   export class Rook extends Figure {
-    constructor(color: "white" | "black", position: string) {
-      super("rook", color, position);
+    constructor(color: "white" | "black", position: string, image_path: string) {
+      super("rook", color, position, image_path);
     }
   }
   
   export class Bishop extends Figure {
-    constructor(color: "white" | "black", position: string) {
-      super("bishop", color, position);
+    constructor(color: "white" | "black", position: string, image_path: string) {
+      super("bishop", color, position, image_path);
     }
   }
   
   export class Knight extends Figure {
-    constructor(color: "white" | "black", position: string) {
-      super("knight", color, position);
+    constructor(color: "white" | "black", position: string, image_path: string) {
+      super("knight", color, position, image_path);
     }
   }
   
   export class Pawn extends Figure {
-    constructor(color: "white" | "black", position: string) {
-      super("pawn", color, position);
+    constructor(color: "white" | "black", position: string, image_path: string) {
+      super("pawn", color, position, image_path);
     }
   }
   

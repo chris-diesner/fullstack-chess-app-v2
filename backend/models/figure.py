@@ -2,16 +2,19 @@ import uuid
 from pydantic import BaseModel
 from enum import Enum
 
-class FigureColor(Enum):
+class FigureColor(str, Enum):
     WHITE = "white"
     BLACK = "black"
 
 class Figure(BaseModel):
-    
     id: str = str(uuid.uuid4())
     name: str
     color: FigureColor
     position: tuple[int, int]
+
+    @property
+    def image_path(self) -> str:
+        return f"/assets/{self.color}_{self.name}.png"
 
 class Pawn(Figure):
     name: str = "pawn"

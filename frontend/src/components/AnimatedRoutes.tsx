@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import ProtectedRoutes from "./ProtectedRoutes";
 import HomePage from "../pages/HomePage";
 import LobbyPage from "../pages/LobbyPage";
+import GamePage from "../pages/GamePage";
 import AboutPage from "../pages/AboutPage";
 import Layout from "./Layout";
 
@@ -18,6 +19,7 @@ function AnimatedRoutes() {
 
           <Route element={<ProtectedRoutes />}>
             <Route path="lobby" element={<LobbyPage />} />
+            <Route path="game" element={<GamePage gameState={null} />} />
           </Route>
         </Route>
       </Routes>
