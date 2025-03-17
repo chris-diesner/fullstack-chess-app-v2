@@ -19,7 +19,7 @@ function AnimatedRoutes() {
 
           <Route element={<ProtectedRoutes />}>
             <Route path="lobby" element={<LobbyPage />} />
-            <Route path="game" element={<GamePage gameState={null} />} />
+            <Route path="game/:gameId" element={<GamePage />} />
           </Route>
         </Route>
       </Routes>

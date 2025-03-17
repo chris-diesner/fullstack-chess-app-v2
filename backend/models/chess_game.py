@@ -1,5 +1,5 @@
+from pydantic import BaseModel, field_serializer
 from enum import Enum
-from pydantic import BaseModel
 from models.chess_board import ChessBoard
 from models.user import UserInGame
 from datetime import datetime
@@ -11,7 +11,6 @@ class GameStatus(str, Enum):
     ABORTED = "aborted"
 
 class ChessGame(BaseModel):
-    
     game_id: str
     time_stamp_start: datetime
     player_white: UserInGame
@@ -20,3 +19,7 @@ class ChessGame(BaseModel):
     board: ChessBoard
     status: GameStatus = GameStatus.RUNNING
     last_move: Optional[dict] = None
+
+    @field_serializer("time_stamp_start")
+    def serialize_timestamp(self, timestamp: datetime) -> str:
+        return timestamp.isoformat()

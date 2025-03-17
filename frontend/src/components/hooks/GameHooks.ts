@@ -145,6 +145,7 @@ export default function GameHooks(
 
         const data = await response.json();
         if (data) {
+            updateGameState(data);
             connectGameWebSocket(gameId);
         }
     };
@@ -156,6 +157,6 @@ export default function GameHooks(
         };
     }, []);
 
-    return { makeMove, createLobby, listLobbies, joinLobby, leaveLobby, setPlayerColor, setPlayerStatus, startGame };
+    return { makeMove, createLobby, listLobbies, joinLobby, leaveLobby, setPlayerColor, setPlayerStatus, startGame, connectLobbyWebSocket, connectGameWebSocket };
     
 }

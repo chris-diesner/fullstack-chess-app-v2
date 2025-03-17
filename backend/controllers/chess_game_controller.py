@@ -10,7 +10,14 @@ game_service = ChessGameService()
 async def websocket_game(websocket: WebSocket, game_id: str):
     await websocket.accept()
     await game_service.connect(websocket, game_id)
+    
     try:
+        game = game_service.get_game_state(game_id)
+        print(f"DEBUG vor Broadcast bei start_game: Spieler verbunden mit game_id={game.game_id}")
+        
+        if game:
+            await game_service.broadcast(game_id, {"type": "game_state", "data": game.model_dump()})
+    
         while True:
             data = await websocket.receive_json()
             action = data.get("action")
@@ -26,7 +33,7 @@ async def websocket_game(websocket: WebSocket, game_id: str):
                     return
 
                 try:
-                    game = game_service.move_figure(tuple(start_pos), tuple(end_pos), game_id, user_id)
+                    game = await game_service.move_figure(tuple(start_pos), tuple(end_pos), game_id, user_id)
                     await game_service.broadcast(game_id, {"type": "game_state", "data": game.model_dump()})
                 except ValueError as e:
                     await websocket.send_json({"type": "error", "message": str(e)})
@@ -35,19 +42,18 @@ async def websocket_game(websocket: WebSocket, game_id: str):
     except Exception as e:
         await websocket.send_json({"type": "error", "message": f"Fehler: {str(e)}"})
 
-    
 @game_router.post("/start_game/{game_id}/{user_id}", response_model=ChessGame)
 async def start_game(game_id: str, user_id: str):
     
     try:
-        print(f"🟢 Spielstart angefordert für game_id={game_id}, user_id={user_id}")
+        print(f"Spielstart angefordert für game_id={game_id}, user_id={user_id}")
         return await game_service.start_game(game_id, user_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 # fallback route for debbuging 
 @game_router.post("/move/{game_id}/{user_id}")
-def move(game_id: str, user_id: str, move_data: dict):
+async def move(game_id: str, user_id: str, move_data: dict):
     try:
         start_pos = move_data.get("start_pos")
         end_pos = move_data.get("end_pos")
@@ -55,7 +61,7 @@ def move(game_id: str, user_id: str, move_data: dict):
         if not start_pos or not end_pos:
             raise HTTPException(status_code=400, detail="Ungültige Eingabe! Start- und Endposition müssen angegeben werden.")
 
-        return game_service.move_figure(tuple(start_pos), tuple(end_pos), game_id, user_id)
+        return  await game_service.move_figure(tuple(start_pos), tuple(end_pos), game_id, user_id)
     
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

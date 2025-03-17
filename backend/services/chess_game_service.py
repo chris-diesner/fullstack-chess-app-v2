@@ -85,7 +85,7 @@ class ChessGameService:
             game = ChessGame(**game)
 
         self.game_repo.insert_game(game.model_dump())
-
+        print("Broadcasting game_started:", game.model_dump())
         await self.broadcast(game_id, {"type": "game_started", "game": game.model_dump()})
         return game
 
@@ -93,6 +93,9 @@ class ChessGameService:
         game_data = self.game_repo.find_game_by_id(game_id)
         if not game_data:
             raise ValueError("Spiel nicht gefunden.")
+        
+        if isinstance(game_data, ChessGame):
+            return game_data
         
         return ChessGame(**game_data)
 

@@ -89,7 +89,11 @@ export default function LobbyPage() {
         if (!user?.user_id) return;
         try {
             await startGame(gameId, user.user_id);
-            navigate(`/game/${gameId}`);
+            console.log("Navigiere zu Spiel:", gameId);
+            if (gameId) {
+                navigate(`/game/${gameId}`);
+            }
+
         } catch {
             setError("Fehler beim Starten des Spiels.");
         }
