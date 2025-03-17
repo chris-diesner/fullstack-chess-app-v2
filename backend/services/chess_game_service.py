@@ -19,28 +19,29 @@ LOBBY_NOT_FOUND_ERROR = "Lobby nicht gefunden."
 class ChessGameService:
     def __init__(self):
         self.game_repo = ChessGameRepository()
-        self.active_connections: Dict[str, List[WebSocket]] = {}
+        self.active_game_connections: Dict[str, List[WebSocket]] = {}
         self.lobby_service = ChessLobbyService()
-        self.game_lobbies = self.lobby_service.game_lobbies
+        
+        print(f"🕵️‍♂️ Instanz-Check ChessLobbyService in GameService: {id(self.lobby_service)}")
         
     async def connect(self, websocket: WebSocket, game_id: str):
-        if game_id not in self.active_connections:
-            self.active_connections[game_id] = []
-        self.active_connections[game_id].append(websocket)
+        if game_id not in self.active_game_connections:
+            self.active_game_connections[game_id] = []
+        self.active_game_connections[game_id].append(websocket)
 
     def disconnect(self, websocket: WebSocket, game_id: str):
-        if game_id in self.active_connections:
-            self.active_connections[game_id].remove(websocket)
-            if not self.active_connections[game_id]:
-                del self.active_connections[game_id]
+        if game_id in self.active_game_connections:
+            self.active_game_connections[game_id].remove(websocket)
+            if not self.active_game_connections[game_id]:
+                del self.active_game_connections[game_id]
 
     async def broadcast(self, game_id: str, message: dict):
-        if game_id in self.active_connections:
-            for ws in self.active_connections[game_id]:
+        if game_id in self.active_game_connections:
+            for ws in self.active_game_connections[game_id]:
                 await ws.send_json(message)
                 
     async def start_game(self, game_id: str, user_id: str) -> ChessGame:
-        lobby = self.game_lobbies.get(game_id)
+        lobby = self.lobby_service.get_lobbies(game_id)
         if not lobby:
             raise ChessGameException("Lobby nicht gefunden.")
 
@@ -86,7 +87,7 @@ class ChessGameService:
 
         self.game_repo.insert_game(game.model_dump())
         print("Broadcasting game_started:", game.model_dump())
-        await self.broadcast(game_id, {"type": "game_started", "game": game.model_dump()})
+        await self.lobby_service.notify_game_start(game.game_id)
         return game
 
     def get_game_state(self, game_id: str) -> ChessGame | None:

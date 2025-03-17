@@ -7,36 +7,50 @@ from typing import Dict, List
 LOBBY_NOT_FOND_ERROR = "Lobby nicht gefunden."
 
 class ChessLobbyService:
+    _instance = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(ChessLobbyService, cls).__new__(cls)
+            cls._instance.game_lobbies = {}
+            cls._instance.active_lobby_connections = {}
+        return cls._instance
     
     def __init__(self):
-        if not hasattr(ChessLobbyService, "game_lobbies"):
-            ChessLobbyService.game_lobbies = {}
-        self.active_connections: Dict[str, List[WebSocket]] = {}
-        
-    def get_lobbies(self):
-        return ChessLobbyService.game_lobbies
-        
+        print(f"🕵️‍♂️ Instanz-Check ChessLobbyService: {id(self)}")
+                
+    def get_lobbies(self, game_id: str = None):
+        if game_id:
+            return self.game_lobbies.get(game_id)
+        return self.game_lobbies
+
     async def connect(self, websocket: WebSocket, game_id: str):
-        if game_id not in self.active_connections:
-            self.active_connections[game_id] = []
-        self.active_connections[game_id].append(websocket)
+        if game_id not in self.active_lobby_connections:
+            self.active_lobby_connections[game_id] = []
+        self.active_lobby_connections[game_id].append(websocket)
+        print(f"✅ Spieler verbunden mit game_id={game_id}. Aktive Connections: {len(self.active_lobby_connections[game_id])}")
 
     def disconnect(self, websocket: WebSocket, game_id: str):
-        if game_id in self.active_connections:
-            self.active_connections[game_id].remove(websocket)
-            if not self.active_connections[game_id]:
-                del self.active_connections[game_id]
+        if game_id in self.active_lobby_connections:
+            self.active_lobby_connections[game_id].remove(websocket)
+            print(f"❌ WebSocket entfernt für game_id={game_id}. Verbleibende Clients: {len(self.active_lobby_connections[game_id])}")
+            
+            if not self.active_lobby_connections[game_id]:  
+                del self.active_lobby_connections[game_id]  
+                print(f"⚠️ Alle Clients entfernt. game_id={game_id} wurde aus active_lobby_connections gelöscht!")
+
                 
     async def broadcast(self, game_id: str, message: dict):
-        if game_id in self.active_connections:
-            for ws in self.active_connections[game_id]:
+        if game_id in self.active_lobby_connections:
+            for ws in self.active_lobby_connections[game_id]:
                 await ws.send_json(message)
 
     async def notify_lobby_update(self, game_id: str):
-        if game_id in self.active_connections:
+        if game_id in self.active_lobby_connections:
             lobby = self.game_lobbies.get(game_id)
             if lobby:
                 data = {
+                    "type": "lobby_update",
                     "game_id": lobby.game_id,
                     "players": [
                         {
@@ -48,8 +62,26 @@ class ChessLobbyService:
                         for user in lobby.players
                     ]
                 }
-                for connection in self.active_connections[game_id]:
+                for connection in self.active_lobby_connections[game_id]:
                     await connection.send_json(data)
+        
+    async def notify_game_start(self, game_id: str):
+        print(f"🕵️‍♂️ Instanz-Check ChessLobbyService: {id(self)}")
+        print(f"🚀 Benachrichtige Spieler über Spielstart für game_id={game_id}")
+        if game_id not in self.active_lobby_connections:
+            print(f"Aktuelle aktive Lobbys: {self.active_lobby_connections.keys()}")
+            print(f"⚠️ {game_id} nicht in active_lobby_connections. Versuche, WebSockets erneut zu verbinden...")
+            return  # 🚨 Kein KeyError, aber verhindert, dass die Methode fehlschlägt.
+
+        lobby = self.game_lobbies.get(game_id)
+        if not lobby:
+            print(f"⚠️ Lobby {game_id} nicht gefunden!")
+            return
+
+        data = {"type": "game_start", "game_id": game_id}
+
+        for connection in self.active_lobby_connections.get(game_id, []):  # Fallback auf leere Liste
+            await connection.send_json(data)
 
     def create_lobby(self, user: UserLobby) -> Lobby:
         for lobby in self.game_lobbies.values():

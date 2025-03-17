@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button, Container, ListGroup, Spinner, Alert, Dropdown, Form } from "react-bootstrap";
 import GameHooks from "../components/hooks/GameHooks";
 import { Lobby } from "../models/Lobby";
@@ -12,7 +11,6 @@ export default function LobbyPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [creating, setCreating] = useState(false);
-    const navigate = useNavigate();
 
     const fetchLobbies = useCallback(async () => {
         setLoading(true);
@@ -89,11 +87,6 @@ export default function LobbyPage() {
         if (!user?.user_id) return;
         try {
             await startGame(gameId, user.user_id);
-            console.log("Navigiere zu Spiel:", gameId);
-            if (gameId) {
-                navigate(`/game/${gameId}`);
-            }
-
         } catch {
             setError("Fehler beim Starten des Spiels.");
         }

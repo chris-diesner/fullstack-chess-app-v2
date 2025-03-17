@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 import secureLocalStorage from "react-secure-storage";
+import { useNavigate } from 'react-router-dom';
 import { Lobby } from '../../models/Lobby';
 import { ChessGame } from '../../models/ChessGame';
 import { MoveData } from '../../models/ChessGame';
@@ -12,30 +13,43 @@ export default function GameHooks(
     const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
     const [lobbySocket, setLobbySocket] = useState<WebSocket | null>(null);
     const [gameSocket, setGameSocket] = useState<WebSocket | null>(null);
+    const navigate = useNavigate();
 
     const connectLobbyWebSocket = (gameId: string) => {
+        if (lobbySocket?.readyState === WebSocket.OPEN) {
+            console.log("Lobby WebSocket bereits offen.");
+            return;
+        }
+    
+        console.log("🔄 Lobby WebSocket wird (re-)verbunden für", gameId);
         const webSocket = new WebSocket(`${BACKEND_URL.replace("http", "ws")}/lobby/ws/${gameId}`);
-
-        webSocket.onopen = () => {
-            console.log("WebSocket connected.");
-        };
-
+    
+        webSocket.onopen = () => console.log("✅ Lobby WebSocket verbunden.");
+        
         webSocket.onmessage = async (event) => {
-            console.log(event.data);
             const data = JSON.parse(event.data);
-            updateLobbies([data]); 
+            console.log("📩 Lobby Nachricht erhalten:", data);
+    
+            if (data.type === "lobby_update") {
+                updateLobbies([data]);
+            }
+    
+            if (data.type === "game_start") {
+                console.log("🎉 Spiel gestartet, navigiere zur Spielseite...");
+                connectGameWebSocket(data.game_id);  // Game WebSocket aufbauen
+                navigate(`/game/${data.game_id}`);
+            }
         };
-
-        webSocket.onclose = () => {
-            console.log("WebSocket closed.");
-        };
+    
+        webSocket.onclose = () => console.log("❌ Lobby WebSocket geschlossen.");
         setLobbySocket(webSocket);
-    };
+    };    
 
     const connectGameWebSocket = (gameId: string) => {
         const webSocket = new WebSocket(`${BACKEND_URL.replace("http", "ws")}/game/ws/${gameId}`);
 
         webSocket.onopen = () => console.log("Game WebSocket connected.");
+        
         webSocket.onmessage = (event) => {
             console.log("Game Update:", event.data);
             const data = JSON.parse(event.data);
@@ -146,13 +160,17 @@ export default function GameHooks(
         const data = await response.json();
         if (data) {
             updateGameState(data);
-            connectGameWebSocket(gameId);
+
+            setTimeout(() => {
+                console.log("🔄 Stelle sicher, dass der Lobby-WebSocket bleibt");
+                connectLobbyWebSocket(gameId);
+            }, 500);
         }
     };
 
     useEffect(() => {
         return () => {
-            lobbySocket?.close();
+            // lobbySocket?.close();
             gameSocket?.close();
         };
     }, []);

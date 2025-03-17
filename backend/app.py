@@ -17,8 +17,8 @@ from chess_exception import ChessException
 # 🌟 FastAPI App initialisieren
 app = FastAPI()
 
-# 🌟 Logging aktivieren
-logging.basicConfig(level=logging.DEBUG)
+# # 🌟 Logging aktivieren
+# logging.basicConfig(level=logging.DEBUG)
 
 # 🌟 CORS aktivieren
 app.add_middleware(
