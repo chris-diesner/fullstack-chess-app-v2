@@ -1,13 +1,14 @@
 import pytest
 from services.chess_lobby_service import ChessLobbyService
-from repositories.chess_game_repo import ChessGameRepository
-from models.lobby import Lobby, UserLobby
-from models.user import UserLobby, PlayerColor, PlayerStatus
-from models.chess_game import ChessGame, GameStatus
+from models.user import UserLobby
 
 @pytest.fixture
 def lobby_service():
     return ChessLobbyService()
+
+@pytest.fixture(autouse=True)
+def reset_lobby_service():
+    ChessLobbyService().game_lobbies.clear()
 
 user_create_1 = UserLobby(user_id="1234", username="Max", color=None, status="not_ready")
 user_create_2 = UserLobby(user_id="5678", username="Anna", color=None, status="not_ready")
@@ -252,156 +253,3 @@ async def test_set_player_status_fail_color_not_set(lobby_service):
         response = str(e)
     
     assert response == "Wähle zuerst eine Farbe."
-    
-def test_start_game_success_should_return_chess_game(lobby_service, mocker):
-    lobby = Lobby(
-        game_id="1234",
-        players=[
-            UserLobby(
-                user_id="1234",
-                username="Max",
-                color=PlayerColor.WHITE,
-                status=PlayerStatus.READY
-            ),
-            UserLobby(
-                user_id="5678",
-                username="Anna",
-                color=PlayerColor.BLACK,
-                status=PlayerStatus.READY
-            )
-        ]
-    )
-    
-    print(lobby.players)
-    
-    lobby_service.game_lobbies["1234"] = lobby
-    
-    mocker.patch.object(ChessGameRepository, "insert_game", return_value=None)
-
-    game = lobby_service.start_game("1234", "1234")
-
-    assert isinstance(game, ChessGame)
-    assert game.game_id == "1234"
-    assert game.player_white.user_id == "1234"
-    assert game.player_black.user_id == "5678"
-    assert game.player_white.color == PlayerColor.WHITE.value
-    assert game.player_black.color == PlayerColor.BLACK.value
-    assert game.status == GameStatus.RUNNING
-    assert game.current_turn == PlayerColor.WHITE.value
-    assert game.board is not None
-
-    ChessGameRepository.insert_game.assert_called_once()
-
-def test_start_game_fail_not_found(lobby_service):
-    try:
-        response = lobby_service.start_game("1234", "1234")
-    except ValueError as e:
-        response = str(e)
-    
-    assert response == "Lobby nicht gefunden."
-    
-def test_start_game_fail_not_enough_players(lobby_service):
-    lobby = Lobby(
-        game_id="1234",
-        players=[
-            UserLobby(
-                user_id="1234",
-                username="Max",
-                color=PlayerColor.WHITE,
-                status=PlayerStatus.READY
-            )
-        ]
-    )
-    
-    lobby_service.game_lobbies["1234"] = lobby
-    
-    try:
-        response = lobby_service.start_game("1234", "1234")
-    except ValueError as e:
-        response = str(e)
-        
-    assert response == "Spiel braucht zwei Spieler."
-    
-def test_start_game_fail_not_host(lobby_service):
-    lobby = Lobby(
-        game_id="1234",
-        players=[
-            UserLobby(
-                user_id="1234",
-                username="Max",
-                color=PlayerColor.WHITE,
-                status=PlayerStatus.READY
-            ),
-            UserLobby(
-                user_id="5678",
-                username="Anna",
-                color=PlayerColor.BLACK,
-                status=PlayerStatus.READY
-            )
-        ]
-    )
-    
-    lobby_service.game_lobbies["1234"] = lobby
-    
-    try:
-        response = lobby_service.start_game("1234", "5678")
-    except ValueError as e:
-        response = str(e)
-        
-    assert response == "Nur der Host kann das Spiel starten."
-    
-def test_start_game_fail_not_all_colors_set(lobby_service):
-    lobby = Lobby(
-        game_id="1234",
-        players=[
-            UserLobby(
-                user_id="1234",
-                username="Max",
-                color=None,
-                status=PlayerStatus.READY
-            ),
-            UserLobby(
-                user_id="5678",
-                username="Anna",
-                color=PlayerColor.BLACK,
-                status=PlayerStatus.READY
-            )
-        ]
-    )
-    
-    lobby_service.game_lobbies["1234"] = lobby
-    
-    try:
-        response = lobby_service.start_game("1234", "1234")
-    except ValueError as e:
-        response = str(e)
-        
-    assert response == "Beide Spieler müssen eine Farbe wählen."
-    
-def test_start_game_fail_not_all_ready(lobby_service):
-    lobby = Lobby(
-        game_id="1234",
-        players=[
-            UserLobby(
-                user_id="1234",
-                username="Max",
-                color=PlayerColor.WHITE,
-                status=PlayerStatus.NOT_READY
-            ),
-            UserLobby(
-                user_id="5678",
-                username="Anna",
-                color=PlayerColor.BLACK,
-                status=PlayerStatus.READY
-            )
-        ]
-    )
-    
-    lobby_service.game_lobbies["1234"] = lobby
-    
-    try:
-        response = lobby_service.start_game("1234", "1234")
-    except ValueError as e:
-        response = str(e)
-        
-    assert response == "Beide Spieler müssen bereit sein."

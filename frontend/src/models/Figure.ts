@@ -1,11 +1,11 @@
 export class Figure {
-    type: string;
+    name: string;
     color: "white" | "black";
     position: string;
     image_path: string;
   
     constructor(type: string, color: "white" | "black", position: string, image_path: string) {
-      this.type = type;
+      this.name = type;
       this.color = color;
       this.position = position;
       this.image_path = image_path;

@@ -1,5 +1,5 @@
 from models.chess_game import ChessGame, GameStatus
-from models.user import UserInGame, UserLobby, PlayerColor, PlayerStatus
+from models.user import UserInGame, PlayerColor, PlayerStatus
 from repositories.chess_game_repo import ChessGameRepository
 from services.chess_board_service import ChessBoardService
 from models.figure import King, Queen, Bishop, Knight, Rook, Pawn, FigureColor
@@ -36,9 +36,16 @@ class ChessGameService:
                 del self.active_game_connections[game_id]
 
     async def broadcast(self, game_id: str, message: dict):
+        
         if game_id in self.active_game_connections:
-            for ws in self.active_game_connections[game_id]:
-                await ws.send_json(message)
+            
+            for index, ws in enumerate(self.active_game_connections[game_id]):
+                try:
+                    await ws.send_json(message)
+                except Exception as e:
+                    print(f"Fehler beim Senden an WebSocket [{index+1}]: {e}")
+        else:
+            print(f"[BROADCAST] Keine aktiven WebSocket-Verbindungen für game_id={game_id}.")
                 
     async def start_game(self, game_id: str, user_id: str) -> ChessGame:
         lobby = self.lobby_service.get_lobbies(game_id)
@@ -86,7 +93,6 @@ class ChessGameService:
             game = ChessGame(**game)
 
         self.game_repo.insert_game(game.model_dump())
-        print("Broadcasting game_started:", game.model_dump())
         await self.lobby_service.notify_game_start(game.game_id)
         return game
 
@@ -114,7 +120,7 @@ class ChessGameService:
         
         if figure is None:
             raise ValueError("Du hast ein leeres Feld ausgewählt!")
-
+        
         if figure.color.value != game.current_turn:
             raise ValueError(f"Es ist {game.current_turn}'s Zug!")
 
@@ -129,12 +135,12 @@ class ChessGameService:
         
         if captured_figure := game.board.squares[end_pos[0]][end_pos[1]]:
             capturing_player = game.player_black if captured_figure.color == FigureColor.WHITE else game.player_white
-            capturing_player.captured_figures.append(copy.deepcopy(captured_figure)) 
+            capturing_player.captured_figures.append(copy.deepcopy(captured_figure))
 
         game.board.squares[end_pos[0]][end_pos[1]] = figure
         game.board.squares[start_pos[0]][start_pos[1]] = None
         figure.position = end_pos
-        
+                
         active_player = game.player_white if game.current_turn == PlayerColor.WHITE else game.player_black
         notation = f"{figure.position}{start_pos[1]}{start_pos[0]}{end_pos[1]}{end_pos[0]}"
         active_player.move_history.append(notation)
@@ -169,14 +175,14 @@ class ChessGameService:
             winner = PlayerColor.WHITE if game.current_turn == PlayerColor.BLACK else PlayerColor.BLACK
             loser = game.current_turn
             
-            await self.send_notification(game, f"Schachmatt! {winner} hat gewonnen! {loser} hat verloren!")
+            await self.send_notification(game.game_id, f"Schachmatt! {winner} hat gewonnen! {loser} hat verloren!")
         
             raise ValueError(f"Schachmatt! {winner} hat gewonnen! {loser} hat verloren!")
         
         self.game_repo.insert_game(game)
         
         if king_in_check:
-            raise ValueError(f"Schach! {game.current_turn} ist im Schach!")
+            raise ValueError(f"Schach! {game.current_turn.value} ist im Schach!")
         
         return game
     

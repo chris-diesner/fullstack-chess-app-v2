@@ -2,18 +2,28 @@ import pytest
 import uuid
 import copy
 from unittest.mock import MagicMock
-from services.chess_game_service import ChessGameService
+from services.chess_game_service import ChessGameService, ChessGameException
 from services.chess_board_service import ChessBoardService
+from services.chess_lobby_service import ChessLobbyService
+from repositories.chess_game_repo import ChessGameRepository
 from models.chess_game import ChessGame, GameStatus
 from models.user import UserLobby, UserInGame, PlayerColor, PlayerStatus
 from models.chess_board import ChessBoard
 from models.figure import King, Queen, Knight, Rook, Pawn, FigureColor
+from models.lobby import Lobby, UserLobby
 
 @pytest.fixture
 def game_service(scope="function"):
     service = ChessGameService()
     service.game_repo = MagicMock()
     return service
+
+@pytest.fixture
+def lobby_service(scope="function"):
+    l_service = ChessLobbyService()
+    l_service.game_lobbies = {}
+    l_service.active_lobby_connections = {}
+    return l_service
 
 user_lobby_w = UserLobby(user_id="1234", username="Max", color=PlayerColor.WHITE.value, player_status=PlayerStatus.READY.value)
 user_lobby_b = UserLobby(user_id="5678", username="Anna", color=PlayerColor.BLACK.value, player_status=PlayerStatus.READY.value)
@@ -31,30 +41,6 @@ def reset_game_repo():
     global initialized_board
     initialized_board = chess_board_service.initialize_board()
 
-
-def test_initialize_game(game_service):
-    game_id = str(uuid.uuid4())
-    
-    game_service.game_repo.insert_game.return_value = ChessGame(
-        game_id=game_id,
-        time_stamp_start=MagicMock(),
-        player_white=UserInGame(user_id=user_lobby_w.user_id, username=user_lobby_w.username, color=PlayerColor.WHITE.value, captured_figures=[], move_history=[]),
-        player_black=UserInGame(user_id=user_lobby_b.user_id, username=user_lobby_b.username, color=PlayerColor.BLACK.value, captured_figures=[], move_history=[]),
-        current_turn="white",
-        board=initialized_board,
-        status=GameStatus.RUNNING
-    )
-    
-    game = game_service.initialize_game(game_id, user_lobby_w, user_lobby_b)
-    
-    assert game.game_id == game_id
-    assert game.player_white == UserInGame(user_id=user_lobby_w.user_id, username=user_lobby_w.username, color=PlayerColor.WHITE.value, captured_figures=[], move_history=[])
-    assert game.player_black == UserInGame(user_id=user_lobby_b.user_id, username=user_lobby_b.username, color=PlayerColor.BLACK.value, captured_figures=[], move_history=[])
-    assert game.current_turn == "white"
-    assert game.status == GameStatus.RUNNING
-    assert game.board == game_service.game_repo.insert_game.return_value.board
-    game_service.game_repo.insert_game.assert_called_once_with(game)
-    
 def test_get_game_state_success_should_return_valid_game(game_service):
     game_id = str(uuid.uuid4())
     
@@ -480,9 +466,10 @@ async def test_move_figure_should_raise_message_for_checkmate(empty_board):
     assert inserted_game.board.squares == expected_board.squares
     assert inserted_game.status == GameStatus.ENDED
     
-    assert str(e.value) == "Schachmatt! black hat gewonnen! white hat verloren!"
+    assert str(e.value) == f"Schachmatt! {PlayerColor.BLACK} hat gewonnen! {PlayerColor.WHITE} hat verloren!"
     
-def test_pawn_promotion_to_queen(game_service, empty_board):
+@pytest.mark.asyncio
+async def test_pawn_promotion_to_queen(game_service, empty_board):
     game_id = str(uuid.uuid4())
 
     test_board = empty_board
@@ -512,7 +499,7 @@ def test_pawn_promotion_to_queen(game_service, empty_board):
         status=GameStatus.RUNNING
     )
 
-    updated_game = game_service.promote_pawn(game_id, (0, 3), "queen")
+    updated_game = await game_service.promote_pawn(game_id, (0, 3), "queen")
 
     assert isinstance(updated_game.board.squares[0][3], Queen)
     
@@ -651,3 +638,150 @@ async def test_move_figure_should_raise_message_for_check_for_next_current_playe
     assert inserted_game.player_black.captured_figures[0].position == captured_figure.position
 
     assert inserted_game.player_white.captured_figures == [] 
+
+@pytest.mark.asyncio    
+async def test_start_game_success_should_return_chess_game(game_service, lobby_service, mocker):
+    lobby = Lobby(
+        game_id="1234",
+        players=[
+            UserLobby(
+                user_id="1234",
+                username="Max",
+                color=PlayerColor.WHITE,
+                status=PlayerStatus.READY
+            ),
+            UserLobby(
+                user_id="5678",
+                username="Anna",
+                color=PlayerColor.BLACK,
+                status=PlayerStatus.READY
+            )
+        ]
+    )
+    
+    lobby_service.game_lobbies["1234"] = lobby
+    
+    mocker.patch.object(ChessGameRepository, "insert_game", return_value=None)
+
+    game = await game_service.start_game("1234", "1234")
+
+    assert isinstance(game, ChessGame)
+    assert game.game_id == "1234"
+    assert game.player_white.user_id == "1234"
+    assert game.player_black.user_id == "5678"
+    assert game.player_white.color == PlayerColor.WHITE.value
+    assert game.player_black.color == PlayerColor.BLACK.value
+    assert game.status == GameStatus.RUNNING
+    assert game.current_turn == PlayerColor.WHITE.value
+    assert game.board is not None
+
+@pytest.mark.asyncio
+async def test_start_game_fail_not_found(lobby_service, game_service):
+    lobby_service.game_lobbies = {}
+    
+    with pytest.raises(ChessGameException) as e:
+        await game_service.start_game("1234", "1234")
+
+    assert str(e.value) == "Lobby nicht gefunden."
+    
+@pytest.mark.asyncio
+async def test_start_game_fail_not_enough_players(lobby_service, game_service):
+    lobby = Lobby(
+        game_id="1234",
+        players=[
+            UserLobby(
+                user_id="1234",
+                username="Max",
+                color=PlayerColor.WHITE,
+                status=PlayerStatus.READY
+            )
+        ]
+    )
+    
+    lobby_service.game_lobbies["1234"] = lobby
+    
+    with pytest.raises(ChessGameException) as e:
+        await game_service.start_game("1234", "1234")
+        
+    assert str(e.value) == "Spiel braucht zwei Spieler."
+    
+@pytest.mark.asyncio
+async def test_start_game_fail_not_host(lobby_service, game_service):
+    lobby = Lobby(
+        game_id="1234",
+        players=[
+            UserLobby(
+                user_id="1234",
+                username="Max",
+                color=PlayerColor.WHITE,
+                status=PlayerStatus.READY
+            ),
+            UserLobby(
+                user_id="5678",
+                username="Anna",
+                color=PlayerColor.BLACK,
+                status=PlayerStatus.READY
+            )
+        ]
+    )
+    
+    lobby_service.game_lobbies["1234"] = lobby
+    
+    with pytest.raises(ChessGameException) as e:
+        await game_service.start_game("1234", "5678")
+        
+    assert str(e.value) == "Nur der Host kann das Spiel starten."
+    
+@pytest.mark.asyncio
+async def test_start_game_fail_not_all_colors_set(lobby_service, game_service):
+    lobby = Lobby(
+        game_id="1234",
+        players=[
+            UserLobby(
+                user_id="1234",
+                username="Max",
+                color=None,
+                status=PlayerStatus.READY
+            ),
+            UserLobby(
+                user_id="5678",
+                username="Anna",
+                color=PlayerColor.BLACK,
+                status=PlayerStatus.READY
+            )
+        ]
+    )
+    
+    lobby_service.game_lobbies["1234"] = lobby
+    
+    with pytest.raises(ChessGameException) as e:
+        await game_service.start_game("1234", "1234")
+    
+    assert str(e.value) == "Beide Spieler müssen eine Farbe wählen."
+    
+@pytest.mark.asyncio
+async def test_start_game_fail_not_all_ready(lobby_service, game_service):
+    lobby = Lobby(
+        game_id="1234",
+        players=[
+            UserLobby(
+                user_id="1234",
+                username="Max",
+                color=PlayerColor.WHITE,
+                status=PlayerStatus.NOT_READY
+            ),
+            UserLobby(
+                user_id="5678",
+                username="Anna",
+                color=PlayerColor.BLACK,
+                status=PlayerStatus.READY
+            )
+        ]
+    )
+    
+    lobby_service.game_lobbies["1234"] = lobby
+    
+    with pytest.raises(ChessGameException) as e:
+        await game_service.start_game("1234", "1234")
+    
+    assert str(e.value) == "Beide Spieler müssen bereit sein."

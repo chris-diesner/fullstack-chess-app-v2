@@ -2,7 +2,6 @@ import uuid
 from fastapi.websockets import WebSocket
 from models.lobby import Lobby
 from models.user import UserLobby
-from typing import Dict, List
 
 LOBBY_NOT_FOND_ERROR = "Lobby nicht gefunden."
 
@@ -17,7 +16,7 @@ class ChessLobbyService:
         return cls._instance
     
     def __init__(self):
-        print(f"🕵️‍♂️ Instanz-Check ChessLobbyService: {id(self)}")
+        print(f"Instanz-Check ChessLobbyService: {id(self)}")
                 
     def get_lobbies(self, game_id: str = None):
         if game_id:
@@ -28,17 +27,13 @@ class ChessLobbyService:
         if game_id not in self.active_lobby_connections:
             self.active_lobby_connections[game_id] = []
         self.active_lobby_connections[game_id].append(websocket)
-        print(f"✅ Spieler verbunden mit game_id={game_id}. Aktive Connections: {len(self.active_lobby_connections[game_id])}")
 
     def disconnect(self, websocket: WebSocket, game_id: str):
         if game_id in self.active_lobby_connections:
             self.active_lobby_connections[game_id].remove(websocket)
-            print(f"❌ WebSocket entfernt für game_id={game_id}. Verbleibende Clients: {len(self.active_lobby_connections[game_id])}")
             
             if not self.active_lobby_connections[game_id]:  
                 del self.active_lobby_connections[game_id]  
-                print(f"⚠️ Alle Clients entfernt. game_id={game_id} wurde aus active_lobby_connections gelöscht!")
-
                 
     async def broadcast(self, game_id: str, message: dict):
         if game_id in self.active_lobby_connections:
@@ -66,21 +61,16 @@ class ChessLobbyService:
                     await connection.send_json(data)
         
     async def notify_game_start(self, game_id: str):
-        print(f"🕵️‍♂️ Instanz-Check ChessLobbyService: {id(self)}")
-        print(f"🚀 Benachrichtige Spieler über Spielstart für game_id={game_id}")
         if game_id not in self.active_lobby_connections:
-            print(f"Aktuelle aktive Lobbys: {self.active_lobby_connections.keys()}")
-            print(f"⚠️ {game_id} nicht in active_lobby_connections. Versuche, WebSockets erneut zu verbinden...")
-            return  # 🚨 Kein KeyError, aber verhindert, dass die Methode fehlschlägt.
+            return
 
         lobby = self.game_lobbies.get(game_id)
         if not lobby:
-            print(f"⚠️ Lobby {game_id} nicht gefunden!")
             return
 
         data = {"type": "game_start", "game_id": game_id}
 
-        for connection in self.active_lobby_connections.get(game_id, []):  # Fallback auf leere Liste
+        for connection in self.active_lobby_connections.get(game_id, []):
             await connection.send_json(data)
 
     def create_lobby(self, user: UserLobby) -> Lobby:

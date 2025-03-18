@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ChessGame } from "../models/ChessGame";
 import GameHooks from "../components/hooks/GameHooks";
+import ChessBoard from "../components/ChessBoard";
 import "../styles/ChessBoard.css";
 
 const GamePage: React.FC = () => {
@@ -15,6 +16,14 @@ const GamePage: React.FC = () => {
         }
     }, [gameId]);
 
+    useEffect(() => {
+        if (gameState) {
+            console.log("🔍 GameState erhalten:", gameState);
+            console.log("📋 Board:", gameState.board);
+            console.log("🟦 Squares:", gameState.board?.squares);
+        }
+    }, [gameState]);
+
     return (
         <div className="chess-game-container">
             {gameState ? (
@@ -27,27 +36,7 @@ const GamePage: React.FC = () => {
                             <h3>⚫ {gameState.player_black.username || "Schwarz"}</h3>
                         </div>
                     </div>
-
-                    <div className="chess-board">
-                        {gameState.board.squares.map((row, rowIndex) => (
-                            <div key={rowIndex} className="row">
-                                {row.map((square, colIndex) => (
-                                    <div 
-                                        key={`${rowIndex}-${colIndex}`} 
-                                        className={`square ${(rowIndex + colIndex) % 2 === 0 ? "light" : "dark"}`}
-                                    >
-                                        {square && square.figure && (
-                                            <img
-                                                src={square.figure.image_path}
-                                                alt={square.figure.type} 
-                                                className="chess-piece"
-                                            />
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        ))}
-                    </div>
+                    <ChessBoard gameState={gameState} />
                 </>
             ) : (
                 <p>⏳ Lade Spiel...</p>
