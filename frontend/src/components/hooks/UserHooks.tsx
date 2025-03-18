@@ -5,7 +5,6 @@ import { User } from "../../models/User";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-// ✅ UserContext erstellen
 const UserContext = createContext<{ user: User | null; login: (username: string, password: string) => Promise<void>; register: (username: string, password: string) => Promise<void>; logout: () => void; }>({
     user: null,
     login: async () => {},
@@ -13,7 +12,6 @@ const UserContext = createContext<{ user: User | null; login: (username: string,
     logout: () => {},
 });
 
-// ✅ UserProvider für globale User-Daten
 export function UserProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
 
@@ -35,7 +33,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
     }, []);
 
-    // 🔹 Holt die User-Daten aus `/me` API und speichert sie in State
     const fetchUserData = useCallback(async () => {
         const token = secureLocalStorage.getItem("access_token");
 
@@ -63,7 +60,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         }
     }, [logout]);
 
-    // 🔹 Checkt beim Seitenstart, ob der Token noch gültig ist
     useEffect(() => {
         const checkTokenValidity = async () => {
             const token = secureLocalStorage.getItem("access_token");
@@ -88,12 +84,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         checkTokenValidity();
     }, [fetchUserData, logout]);
 
-    // 🔹 Benutzerregistrierung
     const register = async (username: string, password: string) => {
         try {
             const response = await axios.post(`${BACKEND_URL}/users/register`, { username, password });
 
-            // ✅ Direkt einloggen nach Registrierung
             await login(username, password);
             return response.data;
         } catch (err) {
@@ -105,7 +99,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    // 🔹 Benutzerlogin
     const login = async (username: string, password: string) => {
         const formData = new URLSearchParams();
         formData.append("username", username);
@@ -119,7 +112,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             if (response.status === 200) {
                 const { access_token } = response.data;
                 secureLocalStorage.setItem("access_token", access_token);
-                await fetchUserData(); // ✅ Direkt User-Daten abrufen
+                await fetchUserData();
             }
         } catch (error) {
             console.log("Login Fehler:", error);
@@ -138,7 +131,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     );
 }
 
-// ✅ Custom Hook für globale Nutzung
 export function useUser() {
     return useContext(UserContext);
 }
