@@ -1,51 +1,75 @@
-.chess-game-container {
+.chess-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-top: 20px;
+  position: relative;
 }
 
-.players {
+/* Koordinaten-Beschriftungen */
+.coordinates {
   display: flex;
   justify-content: space-between;
-  width: 100%;
-  max-width: 400px;
-  margin-bottom: 20px;
+  width: 520px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin: 5px 0;
 }
 
-.player {
-  font-size: 1.2rem;
+.corner {
+  width: 20px;
+}
+
+.board-container {
+  display: flex;
+  align-items: center;
+}
+
+.rank-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 480px;
+  font-size: 16px;
   font-weight: bold;
+  color: #333;
 }
 
 .chess-board {
   display: grid;
-  grid-template-rows: repeat(8, 50px);
-  grid-template-columns: repeat(8, 50px);
-  border: 2px solid black;
+  grid-template-columns: repeat(8, 60px);
+  grid-template-rows: repeat(8, 60px);
+  border: 3px solid black;
+  position: relative;
 }
 
-.row {
-  display: flex;
-}
-
+/* Felder */
 .square {
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* Farben für Schachbrett */
 .light {
-  background-color: #f0d9b5;
+  background-color: #f0d9b5; /* Hell */
 }
 
 .dark {
-  background-color: #b58863;
+  background-color: #b58863; /* Dunkel */
 }
 
-.chess-piece {
-  width: 40px;
-  height: 40px;
+/* Hervorhebung des ausgewählten Feldes */
+.selected {
+  background-color: rgba(255, 255, 0, 0.5) !important;
+}
+
+/* Figuren */
+.square img {
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
 }

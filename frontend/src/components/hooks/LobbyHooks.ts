@@ -6,7 +6,7 @@ import { Lobby } from '../../models/Lobby';
 import { ChessGame } from '../../models/ChessGame';
 import { MoveData } from '../../models/ChessGame';
 
-export default function GameHooks(
+export default function LobbyHooks(
     updateLobbies: (lobbies: Lobby[]) => void,
     updateGameState: (gameState: ChessGame | null) => void
 ) {
@@ -24,11 +24,11 @@ export default function GameHooks(
         console.log("🔄 Lobby WebSocket wird (re-)verbunden für", gameId);
         const webSocket = new WebSocket(`${BACKEND_URL.replace("http", "ws")}/lobby/ws/${gameId}`);
     
-        webSocket.onopen = () => console.log("✅ Lobby WebSocket verbunden.");
+        webSocket.onopen = () => console.log("Lobby WebSocket verbunden.");
         
         webSocket.onmessage = async (event) => {
             const data = JSON.parse(event.data);
-            console.log("📩 Lobby Nachricht erhalten:", data);
+            console.log("Lobby Nachricht erhalten:", data);
     
             if (data.type === "lobby_update") {
                 updateLobbies([data]);
@@ -41,7 +41,7 @@ export default function GameHooks(
             }
         };
     
-        webSocket.onclose = () => console.log("❌ Lobby WebSocket geschlossen.");
+        webSocket.onclose = () => console.log("Lobby WebSocket geschlossen.");
         setLobbySocket(webSocket);
     };    
 

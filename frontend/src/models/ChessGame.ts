@@ -1,6 +1,7 @@
 import { User } from "./User";
 import { ChessBoard } from "./ChessBoard";
 import { PlayerColor } from "./User";
+import { Figure } from "./Figure";
 
 export enum GameStatus {
     RUNNING = "running",
@@ -8,18 +9,20 @@ export enum GameStatus {
     ABORTED = "aborted"
   }
 
-export interface MoveData {
-  start: [number, number];
-  end: [number, number];
+  export interface MoveData {
+    figure: Figure;
+    start: [number, number];
+    end: [number, number];
+    twoSquarePawnMove: boolean;
 }
 
 export interface ChessGame {
-    game_id: string;
-    time_stamp_start: string;
-    player_white: User;
-    player_black: User;
-    current_turn: PlayerColor;
+    gameId: string;
+    timeStampStart: string;
+    playerWhite: User;
+    playerBlack: User;
+    currentTurn: PlayerColor;
     board: ChessBoard;
     status: GameStatus;
-    last_move?: MoveData;
+    lastMove?: MoveData;
   }

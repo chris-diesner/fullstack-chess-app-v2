@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { Button, Container, ListGroup, Spinner, Alert, Dropdown, Form } from "react-bootstrap";
-import GameHooks from "../components/hooks/GameHooks";
+import LobbyHooks from "../components/hooks/LobbyHooks";
 import { Lobby } from "../models/Lobby";
 import { useUser } from "../components/hooks/UserHooks";
 
 export default function LobbyPage() {
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
-    const { listLobbies, createLobby, joinLobby, leaveLobby, setPlayerColor, setPlayerStatus, startGame } = GameHooks(setLobbies, () => {});
+    const { listLobbies, createLobby, joinLobby, leaveLobby, setPlayerColor, setPlayerStatus, startGame } = LobbyHooks(setLobbies, () => {});
     const { user } = useUser();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
