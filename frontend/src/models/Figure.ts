@@ -8,7 +8,6 @@ export interface Figure {
   name: string;
   color: FigureColor;
   position: [number, number];
-  imagePath: string;
 }
 
 export class Pawn implements Figure {
@@ -16,13 +15,11 @@ export class Pawn implements Figure {
   name: string = "pawn";
   color: FigureColor;
   position: [number, number];
-  imagePath: string;
 
   constructor(id: string, color: FigureColor, position: [number, number]) {
       this.id = id;
       this.color = color;
       this.position = position;
-      this.imagePath = `/assets/${color}_pawn.png`;
   }
 }
 
@@ -31,14 +28,12 @@ export class Rook implements Figure {
   name: string = "rook";
   color: FigureColor;
   position: [number, number];
-  imagePath: string;
   hasMoved: boolean = false;
 
   constructor(id: string, color: FigureColor, position: [number, number]) {
       this.id = id;
       this.color = color;
       this.position = position;
-      this.imagePath = `/assets/${color}_rook.png`;
   }
 }
 
@@ -47,13 +42,11 @@ export class Knight implements Figure {
   name: string = "knight";
   color: FigureColor;
   position: [number, number];
-  imagePath: string;
 
   constructor(id: string, color: FigureColor, position: [number, number]) {
       this.id = id;
       this.color = color;
       this.position = position;
-      this.imagePath = `/assets/${color}_knight.png`;
   }
 }
 
@@ -62,13 +55,11 @@ export class Bishop implements Figure {
   name: string = "bishop";
   color: FigureColor;
   position: [number, number];
-  imagePath: string;
 
   constructor(id: string, color: FigureColor, position: [number, number]) {
       this.id = id;
       this.color = color;
       this.position = position;
-      this.imagePath = `/assets/${color}_bishop.png`;
   }
 }
 
@@ -77,13 +68,11 @@ export class Queen implements Figure {
   name: string = "queen";
   color: FigureColor;
   position: [number, number];
-  imagePath: string;
 
   constructor(id: string, color: FigureColor, position: [number, number]) {
       this.id = id;
       this.color = color;
       this.position = position;
-      this.imagePath = `/assets/${color}_queen.png`;
   }
 }
 
@@ -92,13 +81,11 @@ export class King implements Figure {
   name: string = "king";
   color: FigureColor;
   position: [number, number];
-  imagePath: string;
   hasMoved: boolean = false;
 
   constructor(id: string, color: FigureColor, position: [number, number]) {
       this.id = id;
       this.color = color;
       this.position = position;
-      this.imagePath = `/assets/${color}_king.png`;
   }
 }

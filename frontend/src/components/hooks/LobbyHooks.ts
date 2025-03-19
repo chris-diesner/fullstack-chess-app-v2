@@ -35,8 +35,8 @@ export default function LobbyHooks(
             }
     
             if (data.type === "game_start") {
-                console.log("🎉 Spiel gestartet, navigiere zur Spielseite...");
-                connectGameWebSocket(data.game_id);  // Game WebSocket aufbauen
+                console.log("Spiel gestartet, navigiere zur Spielseite...");
+                connectGameWebSocket(data.game_id);
                 navigate(`/game/${data.game_id}`);
             }
         };
@@ -128,7 +128,6 @@ export default function LobbyHooks(
             updateGameState(data);
 
             setTimeout(() => {
-                console.log("🔄 Stelle sicher, dass der Lobby-WebSocket bleibt");
                 connectLobbyWebSocket(gameId);
             }, 500);
         }
