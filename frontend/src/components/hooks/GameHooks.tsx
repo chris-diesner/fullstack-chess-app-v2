@@ -15,16 +15,22 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [gameSocket, setGameSocket] = useState<WebSocket | null>(null);
 
     const connectGameWebSocket = (gameId: string) => {
-        const socket = new WebSocket(`${BACKEND_URL.replace("http", "ws")}/game/ws/${gameId}`);
+        const gameWebSocket = new WebSocket(`${BACKEND_URL.replace("http", "ws")}/game/ws/${gameId}`);
+        console.log("Game WebSocket wird (re-)verbunden für", gameId);
 
-        socket.onmessage = (event) => {
+        gameWebSocket.onopen = () => console.log("GameWebSocket mit der ID:", gameId ," erfolgreich verbunden.");
+
+        gameWebSocket.onmessage = async (event) => {
+            console.log("Nachricht erhalten:", event.data);
             const data = JSON.parse(event.data);
             if (data.type === "game_state") {
                 setGameState(data.data);
             }
         };
 
-        setGameSocket(socket);
+        setGameSocket(gameWebSocket);
+
+        gameWebSocket.onclose = () => console.log("GameWebSocket mit der ID:", gameId ," geschlossen.");
     };
 
     const makeMove = (gameId: string, userId: string, start: [number, number], end: [number, number]) => {

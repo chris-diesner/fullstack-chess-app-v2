@@ -17,7 +17,7 @@ export enum GameStatus {
 }
 
 export interface ChessGame {
-    gameId: string;
+    game_id: string;
     timeStampStart: string;
     playerWhite: User;
     playerBlack: User;

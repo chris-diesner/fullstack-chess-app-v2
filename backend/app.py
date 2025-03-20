@@ -14,22 +14,17 @@ from controllers.chess_game_controller import game_router
 from websocket_router import ws_router
 from chess_exception import ChessException
 
-# 🌟 FastAPI App initialisieren
 app = FastAPI()
 
-# # 🌟 Logging aktivieren
-# logging.basicConfig(level=logging.DEBUG)
 
-# 🌟 CORS aktivieren
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Alternativ: ["http://localhost:5173"] falls nur eine erlaubte Quelle
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Erlaubt GET, POST, PUT, DELETE, etc.
-    allow_headers=["*"],  # Erlaubt alle Header
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# 🌟 Fehler-Logging Middleware für interne Serverfehler (500)
 @app.middleware("http")
 async def catch_exceptions_middleware(request: Request, call_next):
     try:
@@ -41,13 +36,11 @@ async def catch_exceptions_middleware(request: Request, call_next):
             content={"detail": f"Interner Serverfehler: {str(e)}"},
         )
 
-# 🌟 Routen registrieren
 app.include_router(user_router, prefix="/users", tags=["Users"])
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(lobby_router, prefix="/lobby", tags=["Lobby"])
 app.include_router(game_router, prefix="/game", tags=["Game"])
 
-# 🌟 Fehlerbehandlung für benutzerdefinierte `ChessException`
 @app.exception_handler(ChessException)
 async def chess_exception_handler(request: Request, exc: ChessException):
     return JSONResponse(
@@ -55,12 +48,10 @@ async def chess_exception_handler(request: Request, exc: ChessException):
         content={"detail": exc.message},
     )
 
-# 🌟 Startseite (Test-Route)
 @app.get("/")
 def home():
     return {"message": "Welcome to the Fullstack Chess API!"}
 
-# 🌟 Server-Start
 if __name__ == "__main__":
     import uvicorn
     logging.info("🚀 FastAPI Server startet auf http://localhost:8000")

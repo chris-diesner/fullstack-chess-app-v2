@@ -1,5 +1,5 @@
 import uuid
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from enum import Enum
 
 class FigureColor(str, Enum):
@@ -7,11 +7,11 @@ class FigureColor(str, Enum):
     BLACK = "black"
 
 class Figure(BaseModel):
-    id: str = str(uuid.uuid4())
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     color: FigureColor
     position: tuple[int, int]
-
+    
     @property
     def image_path(self) -> str:
         return f"/assets/{self.color}_{self.name}.png"

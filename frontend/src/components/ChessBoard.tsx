@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ChessBoard as BoardModel } from "../models/ChessBoard";
 import { useGame } from "./hooks/GameHooks";
+import { useUser } from "./hooks/UserHooks";
 import "../styles/ChessBoard.css";
 
 interface ChessBoardProps {
@@ -10,13 +11,13 @@ interface ChessBoardProps {
 const ChessBoard: React.FC<ChessBoardProps> = ({ board }) => {
   const [selectedSquare, setSelectedSquare] = useState<[number, number] | null>(null);
   const { gameState, makeMove } = useGame();
+  const { user } = useUser();
   
   const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
   const ranks = ["8", "7", "6", "5", "4", "3", "2", "1"];
 
   const handleSquareClick = (row: number, col: number) => {
-    if (!gameState || !gameState.gameId || !gameState.currentTurn) {
-      console.error("Kein gültiges `gameState` verfügbar!");
+    if (!gameState || !gameState.game_id || !user?.user_id) {
       return;
     }
   
@@ -25,13 +26,12 @@ const ChessBoard: React.FC<ChessBoardProps> = ({ board }) => {
         setSelectedSquare([row, col]); 
       }
     } else {
-      console.log("📤 Sende Zug:", selectedSquare, "→", [row, col]);
   
       makeMove(
-        gameState.gameId,
-        gameState.currentTurn,
+        gameState.game_id,
+        user?.user_id,
         selectedSquare,
-        [row, col]
+        [row, col],
       );
   
       setSelectedSquare(null);

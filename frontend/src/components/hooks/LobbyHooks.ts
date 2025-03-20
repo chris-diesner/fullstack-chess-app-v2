@@ -21,12 +21,12 @@ export default function LobbyHooks(
             return;
         }
     
-        console.log("🔄 Lobby WebSocket wird (re-)verbunden für", gameId);
-        const webSocket = new WebSocket(`${BACKEND_URL.replace("http", "ws")}/lobby/ws/${gameId}`);
+        console.log("Lobby WebSocket wird (re-)verbunden für", gameId);
+        const lobbyWebSocket = new WebSocket(`${BACKEND_URL.replace("http", "ws")}/lobby/ws/${gameId}`);
     
-        webSocket.onopen = () => console.log("Lobby WebSocket verbunden.");
+        lobbyWebSocket.onopen = () => console.log("Lobby WebSocket verbunden.");
         
-        webSocket.onmessage = async (event) => {
+        lobbyWebSocket.onmessage = async (event) => {
             const data = JSON.parse(event.data);
             console.log("Lobby Nachricht erhalten:", data);
     
@@ -41,8 +41,8 @@ export default function LobbyHooks(
             }
         };
     
-        webSocket.onclose = () => console.log("Lobby WebSocket geschlossen.");
-        setLobbySocket(webSocket);
+        lobbyWebSocket.onclose = () => console.log("Lobby WebSocket geschlossen.");
+        setLobbySocket(lobbyWebSocket);
     }; 
 
     const createLobby = async (userId: string, username: string) => {
