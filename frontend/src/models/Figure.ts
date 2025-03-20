@@ -1,50 +1,91 @@
-export class Figure {
-    name: string;
-    color: "white" | "black";
-    position: string;
-    image_path: string;
-  
-    constructor(type: string, color: "white" | "black", position: string, image_path: string) {
-      this.name = type;
+export enum FigureColor {
+  WHITE = "white",
+  BLACK = "black"
+}
+
+export interface Figure {
+  id: string;
+  name: string;
+  color: FigureColor;
+  position: [number, number];
+}
+
+export class Pawn implements Figure {
+  id: string;
+  name: string = "pawn";
+  color: FigureColor;
+  position: [number, number];
+
+  constructor(id: string, color: FigureColor, position: [number, number]) {
+      this.id = id;
       this.color = color;
       this.position = position;
-      this.image_path = image_path;
-    }
   }
-  
-  export class King extends Figure {
-    constructor(color: "white" | "black", position: string, image_path: string) {
-      super("king", color, position, image_path);
-    }
+}
+
+export class Rook implements Figure {
+  id: string;
+  name: string = "rook";
+  color: FigureColor;
+  position: [number, number];
+  hasMoved: boolean = false;
+
+  constructor(id: string, color: FigureColor, position: [number, number]) {
+      this.id = id;
+      this.color = color;
+      this.position = position;
   }
-  
-  export class Queen extends Figure {
-    constructor(color: "white" | "black", position: string, image_path: string) {
-      super("queen", color, position, image_path);
-    }
+}
+
+export class Knight implements Figure {
+  id: string;
+  name: string = "knight";
+  color: FigureColor;
+  position: [number, number];
+
+  constructor(id: string, color: FigureColor, position: [number, number]) {
+      this.id = id;
+      this.color = color;
+      this.position = position;
   }
-  
-  export class Rook extends Figure {
-    constructor(color: "white" | "black", position: string, image_path: string) {
-      super("rook", color, position, image_path);
-    }
+}
+
+export class Bishop implements Figure {
+  id: string;
+  name: string = "bishop";
+  color: FigureColor;
+  position: [number, number];
+
+  constructor(id: string, color: FigureColor, position: [number, number]) {
+      this.id = id;
+      this.color = color;
+      this.position = position;
   }
-  
-  export class Bishop extends Figure {
-    constructor(color: "white" | "black", position: string, image_path: string) {
-      super("bishop", color, position, image_path);
-    }
+}
+
+export class Queen implements Figure {
+  id: string;
+  name: string = "queen";
+  color: FigureColor;
+  position: [number, number];
+
+  constructor(id: string, color: FigureColor, position: [number, number]) {
+      this.id = id;
+      this.color = color;
+      this.position = position;
   }
-  
-  export class Knight extends Figure {
-    constructor(color: "white" | "black", position: string, image_path: string) {
-      super("knight", color, position, image_path);
-    }
+}
+
+export class King implements Figure {
+  id: string;
+  name: string = "king";
+  color: FigureColor;
+  position: [number, number];
+  hasMoved: boolean = false;
+
+  constructor(id: string, color: FigureColor, position: [number, number]) {
+      this.id = id;
+      this.color = color;
+      this.position = position;
   }
-  
-  export class Pawn extends Figure {
-    constructor(color: "white" | "black", position: string, image_path: string) {
-      super("pawn", color, position, image_path);
-    }
-  }
-  
+}

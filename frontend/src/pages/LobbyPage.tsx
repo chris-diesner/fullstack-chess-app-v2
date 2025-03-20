@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { Button, Container, ListGroup, Spinner, Alert, Dropdown, Form } from "react-bootstrap";
-import GameHooks from "../components/hooks/GameHooks";
+import LobbyHooks from "../components/hooks/LobbyHooks";
 import { Lobby } from "../models/Lobby";
 import { useUser } from "../components/hooks/UserHooks";
 
 export default function LobbyPage() {
     const [lobbies, setLobbies] = useState<Lobby[]>([]);
-    const { listLobbies, createLobby, joinLobby, leaveLobby, setPlayerColor, setPlayerStatus, startGame } = GameHooks(setLobbies, () => {});
+    const { listLobbies, createLobby, joinLobby, leaveLobby, setPlayerColor, setPlayerStatus, startGame } = LobbyHooks(setLobbies, () => { });
     const { user } = useUser();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -15,21 +15,21 @@ export default function LobbyPage() {
     const fetchLobbies = useCallback(async () => {
         setLoading(true);
         setError(null);
-    
+
         try {
-            const data = await listLobbies();    
-            setLobbies(data.map(lobby => ({ ...lobby })));  
-    
+            const data = await listLobbies();
+            setLobbies(data.map(lobby => ({ ...lobby })));
+
         } catch {
             setError("Fehler beim Laden der Lobbys.");
         } finally {
             setLoading(false);
         }
     }, [listLobbies]);
-    
+
     useEffect(() => {
     }, [lobbies]);
-      
+
     const handleCreateLobby = async () => {
         if (!user?.user_id || !user?.username) {
             setError("Fehler: Benutzer nicht gefunden.");
@@ -91,7 +91,7 @@ export default function LobbyPage() {
             setError("Fehler beim Starten des Spiels.");
         }
     };
-    
+
     const isLobbyReady = (lobby: Lobby) => {
         if (lobby.players.length !== 2) return false;
         return lobby.players.every(p => p.color && p.status === "ready");
@@ -147,7 +147,7 @@ export default function LobbyPage() {
                                             <div>
                                                 <strong>{player.username}</strong>
                                                 <div className="small">
-                                                    Farbe: {player.color ? player.color.toUpperCase() : "Noch nicht gewählt"}  
+                                                    Farbe: {player.color ? player.color.toUpperCase() : "Noch nicht gewählt"}
                                                     <br />
                                                     Status: {player.status === "ready" ? "Bereit" : "Nicht bereit"}
                                                 </div>

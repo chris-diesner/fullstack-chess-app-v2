@@ -9,7 +9,7 @@ from repositories.chess_game_repo import ChessGameRepository
 from models.chess_game import ChessGame, GameStatus
 from models.user import UserLobby, UserInGame, PlayerColor, PlayerStatus
 from models.chess_board import ChessBoard
-from models.figure import King, Queen, Knight, Rook, Pawn, FigureColor
+from models.figure import King, Queen, Knight, Rook, Pawn, FigureColor, Bishop
 from models.lobby import Lobby, UserLobby
 
 @pytest.fixture
@@ -73,6 +73,68 @@ def test_get_game_state_fail_should_raise_error(game_service):
         game_service.get_game_state(game_id)
         
     assert str(e.value) == "Spiel nicht gefunden."
+    
+def test_convert_figure_existing_object():
+    pawn = Pawn(id="test-id", name="pawn", color=FigureColor.WHITE, position=(6, 0))
+
+    result = ChessGameService.convert_figure(pawn)
+
+    assert result == pawn
+    assert isinstance(result, Pawn)
+
+
+@pytest.mark.parametrize("figure_dict, expected_class", [
+    ({"id": "1", "name": "pawn", "color": "white", "position": (6, 0)}, Pawn),
+    ({"id": "2", "name": "rook", "color": "black", "position": (0, 0)}, Rook),
+    ({"id": "3", "name": "knight", "color": "white", "position": (7, 1)}, Knight),
+    ({"id": "4", "name": "bishop", "color": "black", "position": (0, 2)}, Bishop),
+    ({"id": "5", "name": "queen", "color": "white", "position": (7, 3)}, Queen),
+    ({"id": "6", "name": "king", "color": "black", "position": (0, 4)}, King),
+])
+
+def test_convert_figure_from_dict(figure_dict, expected_class):
+    result = ChessGameService.convert_figure(figure_dict)
+
+    assert isinstance(result, expected_class)
+    assert result.id == figure_dict["id"]
+    assert result.name == figure_dict["name"]
+    assert result.color == FigureColor(figure_dict["color"])
+    assert result.position == tuple(figure_dict["position"])
+
+def test_convert_figure_invalid_name():
+    figure_dict = {"id": "7", "name": "unknown", "color": "white", "position": (4, 4)}
+
+    with pytest.raises(ValueError) as e:
+        ChessGameService.convert_figure(figure_dict)
+
+    assert str(e.value) == f"Unbekannte Figur: {figure_dict}"
+
+
+def test_convert_chess_board_from_mongo():
+    chess_board_json = {
+        "squares": [
+            [{"id": "1", "name": "rook", "color": "black", "position": [0, 0]}, None, None, None, None, None, None, {"id": "2", "name": "rook", "color": "black", "position": [0, 7]}],
+            [{"id": "3", "name": "pawn", "color": "black", "position": [1, 0]}, None, None, None, None, None, None, {"id": "4", "name": "pawn", "color": "black", "position": [1, 7]}],
+            [None] * 8,
+            [None] * 8,
+            [None] * 8,
+            [None] * 8,
+            [{"id": "5", "name": "pawn", "color": "white", "position": [6, 0]}, None, None, None, None, None, None, {"id": "6", "name": "pawn", "color": "white", "position": [6, 7]}],
+            [{"id": "7", "name": "rook", "color": "white", "position": [7, 0]}, None, None, None, None, None, None, {"id": "8", "name": "rook", "color": "white", "position": [7, 7]}]
+        ]
+    }
+
+    converted_board = []
+    for row in chess_board_json["squares"]:
+        converted_row = [ChessGameService.convert_figure(figure) if figure else None for figure in row]
+        converted_board.append(converted_row)
+
+    assert isinstance(converted_board[0][0], Rook) 
+    assert converted_board[0][0].color == FigureColor.BLACK
+    assert converted_board[7][0].color == FigureColor.WHITE
+    assert converted_board[1][0].name == "pawn" 
+    assert converted_board[6][0].name == "pawn"
+    assert converted_board[3][3] is None 
 
 @pytest.mark.asyncio    
 async def test_move_figure_should_raise_error_for_empty_square():
@@ -168,7 +230,7 @@ async def test_move_figure_should_raise_error_for_non_legal_move():
     with pytest.raises(ValueError) as e:
         await game_service.move_figure(start_pos, end_pos, game_id, user_lobby_w.user_id)
         
-    assert str(e.value) == "Ungültiger Zug!"
+    assert str(e.value) == "Ungültiger Zug - from MoveValidationService!"
     
 @pytest.mark.asyncio
 async def test_move_figure_should_raise_message_leave_king_in_check(empty_board):

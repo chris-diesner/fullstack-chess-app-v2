@@ -7,7 +7,6 @@ class MoveValidationService:
 
     @staticmethod
     def is_move_valid(figure: Figure, start_pos: tuple[int, int], end_pos: tuple[int, int], board: ChessBoard, game: ChessGame) -> bool:
-
         if not MoveValidationService.is_within_board(end_pos):
             return False
 
@@ -66,7 +65,6 @@ class MoveValidationService:
     def is_valid_move_rook(figure: Rook, start_pos: tuple[int, int], end_pos: tuple[int, int], board: ChessBoard) -> bool:
         start_row, start_col = start_pos
         end_row, end_col = end_pos
-
         if start_row == end_row:
             step = 1 if start_col < end_col else -1
             for col in range(start_col + step, end_col, step):
@@ -87,7 +85,6 @@ class MoveValidationService:
     def is_valid_move_bishop(figure: Bishop, start_pos: tuple[int, int], end_pos: tuple[int, int], board: ChessBoard) -> bool:
         start_row, start_col = start_pos
         end_row, end_col = end_pos
-
         if abs(start_row - end_row) != abs(start_col - end_col):
             return False
 
@@ -119,7 +116,6 @@ class MoveValidationService:
     def is_valid_move_king(figure: King, start_pos: tuple[int, int], end_pos: tuple[int, int], board: ChessBoard) -> bool:
         row_diff = abs(start_pos[0] - end_pos[0])
         col_diff = abs(start_pos[1] - end_pos[1])
-
         if row_diff <= 1 and col_diff <= 1:
             return True
 

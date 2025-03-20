@@ -1,5 +1,6 @@
 from models.chess_game import ChessGame, GameStatus
 from models.user import UserInGame, PlayerColor, PlayerStatus
+from models.figure import Figure, FigureColor, Pawn, Rook, Knight, Bishop, Queen, King
 from repositories.chess_game_repo import ChessGameRepository
 from services.chess_board_service import ChessBoardService
 from models.figure import King, Queen, Bishop, Knight, Rook, Pawn, FigureColor
@@ -9,6 +10,7 @@ from typing import Dict, List
 from fastapi.websockets import WebSocket
 from datetime import datetime
 import copy
+import asyncio
 
 class ChessGameException(Exception):
     """Benutzerdefinierte Exception für Schachspiel-Fehler."""
@@ -94,21 +96,49 @@ class ChessGameService:
 
         self.game_repo.insert_game(game.model_dump())
         await self.lobby_service.notify_game_start(game.game_id)
+        await asyncio.sleep(5)
+        await self.broadcast(game_id, {"type": "game_state", "data": game.model_dump()})
         return game
 
     def get_game_state(self, game_id: str) -> ChessGame | None:
         game_data = self.game_repo.find_game_by_id(game_id)
+        
         if not game_data:
             raise ValueError("Spiel nicht gefunden.")
         
         if isinstance(game_data, ChessGame):
-            return game_data
+            game_dict = game_data.model_dump()
+        else:
+            game_dict = game_data
+
+        for row in game_dict["board"]["squares"]:
+            for i, figure in enumerate(row):
+                if figure:
+                    row[i] = self.convert_figure(figure)
+
+        return ChessGame(**game_dict)
+
+    @staticmethod
+    def convert_figure(figure_data: dict) -> Figure:
+        if not isinstance(figure_data, dict):
+            return figure_data
+
+        figure_classes = {
+            "pawn": Pawn, "rook": Rook, "knight": Knight,
+            "bishop": Bishop, "queen": Queen, "king": King
+        }
         
-        return ChessGame(**game_data)
+        figure_name = figure_data.get("name", "").lower()
+        figure_class = figure_classes.get(figure_name, None)
+
+        if figure_class:
+            return figure_class(**figure_data)
+        
+        raise ValueError(f"Unbekannte Figur: {figure_data}")
 
     async def move_figure(self, start_pos: tuple[int, int], end_pos: tuple[int, int], game_id: str, user_id: str) -> ChessGame | None:
-        game = self.get_game_state(game_id)
-        
+        game = self.get_game_state(game_id)        
+
         if (game.current_turn == PlayerColor.WHITE and user_id != game.player_white.user_id) or \
             (game.current_turn == PlayerColor.BLACK and user_id != game.player_black.user_id):
                 raise ValueError("Nicht dein Zug!")
@@ -117,15 +147,16 @@ class ChessGameService:
             raise ValueError("Spiel ist bereits beendet.")
 
         figure = game.board.squares[start_pos[0]][start_pos[1]]
+        figure = self.convert_figure(figure) if isinstance(figure, dict) else figure
         
         if figure is None:
             raise ValueError("Du hast ein leeres Feld ausgewählt!")
         
         if figure.color.value != game.current_turn:
             raise ValueError(f"Es ist {game.current_turn}'s Zug!")
-
+        
         if not MoveValidationService.is_move_valid(figure, start_pos, end_pos, game.board, game):
-            raise ValueError("Ungültiger Zug!")
+            raise ValueError("Ungültiger Zug - from MoveValidationService!")
         
         if MoveValidationService.is_king_in_check(game, game.board)[0]:
             raise ValueError("Zug nicht möglich! Dein König steht im Schach!")
